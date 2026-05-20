@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
-import FilterImage from "../../../../../../public/images/Filter.svg"; 
+import FilterImage from "@/public/images/Filter.svg"; 
 import { DoctorAppointmentItem } from "@/components/medicalRecord/doctor/doctorAppointmentItem";
 import { appointmentApi } from "@/routers/appointment/appointmentRouter"; 
 import { ConfirmModal } from "@/components/ui/Modal"; 
