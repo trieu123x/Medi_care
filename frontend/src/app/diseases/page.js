@@ -55,8 +55,17 @@ export default function DiseaseLookupPage() {
       setLoading(true);
       try {
         const params = new URLSearchParams();
-        if (selectedSpecialty) params.append("specialtyId", selectedSpecialty);
-        if (selectedCategory) params.append("categoryId", selectedCategory);
+        
+        if (selectedSpecialty && selectedSpecialty !== "Tất cả chuyên khoa") {
+          const spec = specialties.find(s => s.name === selectedSpecialty);
+          if (spec) params.append("specialtyId", spec.id);
+        }
+        
+        if (selectedCategory && selectedCategory !== "Tất cả nhóm bệnh") {
+          const cat = categories.find(c => c.name === selectedCategory);
+          if (cat) params.append("categoryId", cat.id);
+        }
+        
         if (searchQuery) params.append("name", searchQuery);
         params.append("page", page.toString());
 
@@ -95,8 +104,16 @@ export default function DiseaseLookupPage() {
             <div className="flex items-center space-x-2 w-full md:w-auto">
               <Filter className="text-black size-5 hidden md:block" />
               <span className="text-black text-[20px] hidden md:inline whitespace-nowrap">Bộ lọc:</span>
-              <SelectBox value={selectedSpecialty || "Tất cả chuyên khoa"} options={specialties.map(s => s.name)} onChange={(value) => setSelectedSpecialty(value)} />
-              <SelectBox value={selectedCategory || "Tất cả nhóm bệnh"} options={categories.map(c => c.name)} onChange={(value) => setSelectedCategory(value)} />
+              <SelectBox 
+                value={selectedSpecialty || "Tất cả chuyên khoa"} 
+                options={["Tất cả chuyên khoa", ...specialties.map(s => s.name)]} 
+                onChange={(value) => setSelectedSpecialty(value === "Tất cả chuyên khoa" ? "" : value)} 
+              />
+              <SelectBox 
+                value={selectedCategory || "Tất cả nhóm bệnh"} 
+                options={["Tất cả nhóm bệnh", ...categories.map(c => c.name)]} 
+                onChange={(value) => setSelectedCategory(value === "Tất cả nhóm bệnh" ? "" : value)} 
+              />
             </div>
           </div>
 

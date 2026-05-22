@@ -47,8 +47,9 @@ export default function DoctorsPage() {
         let url = "/doctors";
         const params = new URLSearchParams();
 
-        if (selectedSpecialty && selectedSpecialty !== "") {
-          params.append("specialtyId", selectedSpecialty);
+        if (selectedSpecialty && selectedSpecialty !== "" && selectedSpecialty !== "Tất cả chuyên khoa") {
+          const spec = specialties.find(s => s.name === selectedSpecialty);
+          if (spec) params.append("specialtyId", spec.id);
         }
         if (searchQuery && searchQuery.trim() !== "") {
           params.append("name", searchQuery.trim());
@@ -83,7 +84,7 @@ export default function DoctorsPage() {
     }, 400);
 
     return () => clearTimeout(timeoutId);
-  }, [selectedSpecialty, searchQuery, page]);
+  }, [selectedSpecialty, specialties, searchQuery, page]);
 
   useEffect(() => {
     setPage(1);
@@ -98,7 +99,11 @@ export default function DoctorsPage() {
           <Filter className="text-black size-5 hidden md:block" />
           <span className="text-black text-[20px] hidden md:inline whitespace-nowrap">Bộ lọc:</span>
           <div className="relative w-fit">
-            <SelectBox value={selectedSpecialty || "Tất cả chuyên khoa"} options={specialties.map(spec => spec.name)} onChange={(value) => setSelectedSpecialty(value)} />
+            <SelectBox 
+              value={selectedSpecialty || "Tất cả chuyên khoa"} 
+              options={["Tất cả chuyên khoa", ...specialties.map(spec => spec.name)]} 
+              onChange={(value) => setSelectedSpecialty(value === "Tất cả chuyên khoa" ? "" : value)} 
+            />
           </div>
         </div>
 

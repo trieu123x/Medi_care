@@ -23,6 +23,8 @@ export const authenticate = async (req, res, next) => {
       });
     }
 
+
+
     const { data, error } = await supabase.auth.getUser(token);
 
     if (error || !data?.user) {

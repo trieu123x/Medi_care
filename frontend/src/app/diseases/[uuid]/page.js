@@ -3,12 +3,13 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { Stethoscope, Pill as PillIcon } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { Stethoscope, Pill as PillIcon, ArrowLeft } from "lucide-react";
 import axiosInstance from "@/utils/axios";
 
 export default function DiseaseDetailPage() {
   const { uuid } = useParams();
+  const router = useRouter();
   const [disease, setDisease] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -68,6 +69,15 @@ export default function DiseaseDetailPage() {
   return (
     <div className="bg-white min-h-screen rasa-font">
       <div className="max-w-[1440px] mx-auto px-4 md:px-8 py-8">
+        {/* Back Button */}
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-gray-600 hover:text-black mb-6 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span className="text-[18px]">Quay lại</span>
+        </button>
+
         {/* Top Section: Disease Info */}
         <div className="flex flex-col md:flex-row mb-10 md:gap-12">
           {/* Left: Image and Meta */}

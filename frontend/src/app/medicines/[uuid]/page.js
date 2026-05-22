@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import axiosInstance from "@/utils/axios";
 
 export default function MedicineDetailPage() {
   const { uuid } = useParams();
+  const router = useRouter();
   const [medicine, setMedicine] = useState(null);
   const [loading, setLoading] = useState(true);
   console.log(medicine);
@@ -63,6 +65,15 @@ export default function MedicineDetailPage() {
   return (
     <div className="bg-white min-h-screen text-black rasa-font">
       <div className="max-w-[1440px] mx-auto px-4 md:px-8 py-12">
+        {/* Back Button */}
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-gray-600 hover:text-black mb-6 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span className="text-[18px]">Quay lại</span>
+        </button>
+
         <div className="flex flex-col md:flex-row gap-12 lg:gap-20">
 
           {/* Left Column: Image and Metadata */}

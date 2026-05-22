@@ -100,11 +100,12 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Chỉ xử lý lỗi 401 và chưa retry lần nào
+    // Chỉ xử lý lỗi 401 và chưa retry lần nào (không áp dụng cho api login)
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
-      typeof window !== 'undefined'
+      typeof window !== 'undefined' &&
+      !originalRequest?.url?.includes('/auth/login')
     ) {
       const refreshTokenValue = localStorage.getItem('refresh_token');
 

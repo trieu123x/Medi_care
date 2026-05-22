@@ -56,7 +56,6 @@ export default function Aggregate() {
       else if (rep?.previewData) rows = [...rows, ...rep.previewData]
       else if (rep?.data?.previewData) rows = [...rows, ...rep.data.previewData]
     })
-    setLoading(false)
     return rows
   }
 
@@ -68,13 +67,23 @@ export default function Aggregate() {
         const formattedStartDate = format(startDate, 'yyyy-MM-dd')
         const formattedEndDate = format(endDate, 'yyyy-MM-dd')
 
-        const [summerRes, chatRes, doctorRes, diseaseRes, peakShiftRes] = await Promise.all([
+        // Dùng allSettled — 1 report không có data không làm sập các report khác
+        const results = await Promise.allSettled([
           getReportsByTimeRange("daily_summary", formattedStartDate, formattedEndDate),
           getReportsByTimeRange("chat_topics", formattedStartDate, formattedEndDate),
           getReportsByTimeRange("top_doctors", formattedStartDate, formattedEndDate),
           getReportsByTimeRange("top_diseases", formattedStartDate, formattedEndDate),
           getReportsByTimeRange("peak_shifts", formattedStartDate, formattedEndDate)
         ])
+
+        // Lấy giá trị thành công hoặc null nếu thất bại
+        const [summerRes, chatRes, doctorRes, diseaseRes, peakShiftRes] = results.map(
+          (r, i) => {
+            if (r.status === 'fulfilled') return r.value
+            console.warn(`[Report] API thất bại tại index ${i}:`, r.reason)
+            return null
+          }
+        )
 
         const dailyRows = extractRows(summerRes)
         const chatRows = extractRows(chatRes)
@@ -92,9 +101,9 @@ export default function Aggregate() {
         const aggregatedPeakMap = peakRows.reduce((acc, row) => {
           const shift = row.shift_number
           if (!acc[shift]) {
-            acc[shift] = 0 // Khởi tạo nếu ca này chưa có trong object
+            acc[shift] = 0
           }
-          acc[shift] += Number(row.total_events || 0) // Cộng dồn số lượng
+          acc[shift] += Number(row.total_events || 0)
           return acc
         }, {})
 
@@ -108,7 +117,6 @@ export default function Aggregate() {
         const aggregatedChatMap = chatRows.reduce((acc, row) => {
           const topic = row.topic || "Khác"
           if (!acc[topic]) acc[topic] = 0
-
           acc[topic] += Number(row.total_sessions || row.mention_count || 0)
           return acc
         }, {})
@@ -121,7 +129,6 @@ export default function Aggregate() {
           .slice(0, 10)
 
         setChatTopics(formattedChats)
-        console.log(extractRows(doctorRes))
 
         const doctorRows = extractRows(doctorRes)
         const diseaseRows = extractRows(diseaseRes)
@@ -131,6 +138,9 @@ export default function Aggregate() {
 
       } catch (error) {
         console.error("Lỗi lấy báo cáo:", error)
+      } finally {
+        // Đảm bảo luôn tắt loading dù thành công hay thất bại
+        setLoading(false)
       }
     }
 

@@ -10,27 +10,38 @@ import { SearchInput } from "@/components/ui/SearchInput";
 
 export default function MedicineLookupPage() {
   const [medicines, setMedicines] = useState([]);
+  const [medicineTypes, setMedicineTypes] = useState([]);
   const [selectedType, setSelectedType] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Medicine types based on Prisma schema
-  const medicineTypes = [
-    { id: "uống", name: "Thuốc uống" },
-    { id: "ngậm", name: "Thuốc ngậm" },
-    { id: "bôi", name: "Thuốc bôi" },
-    { id: "tiêm", name: "Thuốc tiêm" },
-  ];
-  console.log(medicines)
+  // Fetch medicine types on mount
+  useEffect(() => {
+    const fetchTypes = async () => {
+      try {
+        const res = await axiosInstance.get("/medicine-types/all");
+        if (res.success && res.data) {
+          setMedicineTypes(res.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch medicine types", err);
+      }
+    };
+    fetchTypes();
+  }, []);
+
   // Fetch medicines based on filters
   useEffect(() => {
     const fetchMedicines = async () => {
       setLoading(true);
       try {
         const params = new URLSearchParams();
-        if (selectedType) params.append("medicineType", selectedType);
+        if (selectedType && selectedType !== "Tất cả loại thuốc") {
+          const typeObj = medicineTypes.find(t => t.name === selectedType);
+          if (typeObj) params.append("typeId", typeObj.id);
+        }
         if (searchQuery) params.append("name", searchQuery);
         params.append("limit", "12");
         params.append("page", page.toString());
@@ -49,7 +60,7 @@ export default function MedicineLookupPage() {
 
     const timeoutId = setTimeout(fetchMedicines, 300);
     return () => clearTimeout(timeoutId);
-  }, [selectedType, searchQuery, page]);
+  }, [selectedType, medicineTypes, searchQuery, page]);
 
   useEffect(() => {
     setPage(1);
@@ -65,7 +76,11 @@ export default function MedicineLookupPage() {
               <Filter className="text-black size-5 hidden md:block" />
               <span className="text-black text-[20px] hidden md:inline whitespace-nowrap">Bộ lọc:</span>
               <div className="relative w-fit">
-                <SelectBox value={selectedType || "Tất cả loại thuốc"} options={medicineTypes.map(type => type.name)} onChange={(value) => setSelectedType(value)} />
+                <SelectBox 
+                  value={selectedType || "Tất cả loại thuốc"} 
+                  options={["Tất cả loại thuốc", ...medicineTypes.map(type => type.name)]} 
+                  onChange={(value) => setSelectedType(value === "Tất cả loại thuốc" ? "" : value)} 
+                />
               </div>
             </div>
           </div>
