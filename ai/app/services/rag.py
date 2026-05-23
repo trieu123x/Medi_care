@@ -140,7 +140,7 @@ class RAGService:
                 """,
                 str(uuid.uuid4()),
                 session_id,
-                "user",
+                "USER",
                 user_input,
             )
         except Exception as e:

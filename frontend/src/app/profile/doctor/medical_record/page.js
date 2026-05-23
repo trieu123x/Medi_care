@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import Image from "next/image";
-import FilterImage from "../../../../../public/images/Filter.svg";
+import { Filter } from "lucide-react";
 import { MedicalRecordItem } from "@/components/medicalRecord/medicalRecordItem";
 import { appointmentApi } from "@/routers/appointment/appointmentRouter";
 import { useAuthStore } from "@/stores/auth";
@@ -120,7 +119,7 @@ export default function DoctorMedicalHistoryPage() {
       <div className="w-full max-w-[1400px]">
         
         <div className="flex items-center gap-3 mb-6 rasa-font text-[20px]">
-          <Image src={FilterImage} alt="Filter" height={20} width={20} />
+          <Filter className="w-5 h-5 text-gray-700" />
           <span className="font-bold">Bộ lọc:</span>
           
           <select 
