@@ -112,9 +112,10 @@ describe('chatService', () => {
     it('nên lưu message với metadata nếu được truyền vào', async () => {
       const payload = { symptom: 'sot' }
       const message = { id: 'message-1', metadata: payload }
+      chatRepository.getSessionById.mockResolvedValue({ id: 'session-1', userId: null })
       chatRepository.createMessage.mockResolvedValue(message)
 
-      const result = await chatService.saveMessage('session-1', 'ASSISTANT', 'Ban co bi sot khong?', payload)
+      const result = await chatService.saveMessage('session-1', null, 'ASSISTANT', 'Ban co bi sot khong?', payload)
 
       expect(chatRepository.createMessage).toHaveBeenCalledWith('session-1', 'ASSISTANT', 'Ban co bi sot khong?', payload)
       expect(result).toEqual(message)
@@ -123,7 +124,7 @@ describe('chatService', () => {
 
   describe('updateTopicTrigger', () => {
     it('nên cập nhật topic và track event khi có userId', async () => {
-      axios.post.mockResolvedValue({ data: { topic: 'Ho hap' } })
+      axios.post.mockResolvedValue({ data: { data: { topic_name: 'Ho hap' } } })
 
       const result = await chatService.updateTopicTrigger('session-1', 'user-1')
 
@@ -140,9 +141,9 @@ describe('chatService', () => {
 
       const result = await chatService.updateTopicTrigger('session-2')
 
-      expect(chatRepository.updateSessionTopic).toHaveBeenCalledWith('session-2', 'No Topic')
+      expect(chatRepository.updateSessionTopic).toHaveBeenCalledWith('session-2', 'Nội tổng quát')
       expect(eventService.track).not.toHaveBeenCalled()
-      expect(result).toBe('No Topic')
+      expect(result).toBe('Nội tổng quát')
     })
 
     it('nên trả về null nếu gọi AI thất bại', async () => {

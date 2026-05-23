@@ -170,14 +170,16 @@ export const userService = {
 
     // Xóa cascade thủ công các bảng không có onDelete: Cascade trong schema
     // 1. Xóa notifications liên quan đến appointments của user
-    await prisma.notification.deleteMany({
-      where: {
-        OR: [
-          { userId: id },
-          { appointment: { OR: [{ patientId: id }, { doctorId: id }] } },
-        ],
-      },
-    });
+    if (id) {
+      await prisma.notification.deleteMany({
+        where: {
+          OR: [
+            { userId: String(id) },
+            { appointment: { OR: [{ patientId: String(id) }, { doctorId: String(id) }] } },
+          ],
+        },
+      });
+    }
 
     // 2. Xóa medical records liên quan đến appointments của user
     await prisma.medicalRecord.deleteMany({

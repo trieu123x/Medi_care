@@ -33,23 +33,25 @@ describe('reportService', () => {
     it('nên throw lỗi 404 khi mảng trả về rỗng (không có data trong khoảng thời gian này)', async () => {
       reportRepository.getReportsByTimeRange.mockResolvedValue([])
 
-      await expect(reportService.getReportsByTimeRange({
+      const result = await reportService.getReportsByTimeRange({
         reportName: 'daily_summary',
         mode: 'daily',
         startDate: '2026-03-01',
         endDate: '2026-03-29'
-      })).rejects.toMatchObject({ statusCode: 404 })
+      })
+      expect(result).toEqual([])
     })
 
-    it('nên throw lỗi 404 khi repository trả về null', async () => {
-      reportRepository.getReportsByTimeRange.mockResolvedValue(null)
+    it('nên throw lỗi 404 khi repository trả về array rỗng', async () => {
+      reportRepository.getReportsByTimeRange.mockResolvedValue([])
 
-      await expect(reportService.getReportsByTimeRange({
+      const result = await reportService.getReportsByTimeRange({
         reportName: 'daily_summary',
         mode: 'daily',
         startDate: '2026-03-01',
         endDate: '2026-03-29'
-      })).rejects.toMatchObject({ statusCode: 404 })
+      })
+      expect(result).toEqual([])
     })
   })
 

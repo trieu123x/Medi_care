@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { authService } from '@/services/auth.js'
-import { supabase } from '@/configs/supabase-config.js'
+import { supabase, supabaseAdmin } from '@/configs/supabase-config.js'
 import { profileRepository } from '@/repositories/auth.js'
 
 vi.mock('@/configs/supabase-config.js', () => ({
@@ -17,7 +17,8 @@ vi.mock('@/configs/supabase-config.js', () => ({
     auth: {
       admin: {
         listUsers: vi.fn(),
-        updateUserById: vi.fn()
+        updateUserById: vi.fn(),
+        createUser: vi.fn()
       }
     }
   }
@@ -85,12 +86,15 @@ describe('authService', () => {
     })
 
     it('should throw error if supabase signup fails', async () => {
-      supabase.auth.signUp.mockResolvedValue({ data: null, error: { message: 'Signup failed' } })
+      supabaseAdmin.auth.admin.createUser.mockRejectedValue(new Error('Signup failed'))
       await expect(authService.verifyRegister({ email, otp })).rejects.toThrow('Signup failed')
     })
 
     it('should create user successfully', async () => {
-      supabase.auth.signUp.mockResolvedValue({ data: { user: { id: 'user-123', email: 'test@a.com' } }, error: null })
+      supabaseAdmin.auth.admin.createUser.mockResolvedValue({ 
+        data: { user: { id: 'user-123', email: 'test@a.com' } }, 
+        error: null 
+      })
       profileRepository.create.mockResolvedValue({ id: 'user-123', fullName: 'Test Name', phone: '123', role: 'PATIENT' })
       
       const result = await authService.verifyRegister({ email, otp })

@@ -11,6 +11,14 @@ vi.mock('@/repositories/user.js', () => ({
   }
 }))
 
+vi.mock('@/configs/prisma-config.js', () => ({
+  prisma: {
+    notification: { deleteMany: vi.fn() },
+    medicalRecord: { deleteMany: vi.fn() },
+    appointment: { deleteMany: vi.fn() }
+  }
+}))
+
 vi.mock('@/configs/supabase-config.js', () => ({
   supabaseAdmin: {
     auth: {
