@@ -196,4 +196,50 @@ describe('appointmentService', () => {
       expect(result.status).toBe('confirmed')
     })
   })
+
+  describe('bookAppointment - Unique Constraint', () => {
+    it('should throw error 409 when unique constraint is violated', async () => {
+      const data = {
+        patientId: 'patient-1',
+        doctorId: 'doctor-1',
+        date: '2026-05-25',
+        shift: 3,
+        reason: 'Khám sức khỏe'
+      }
+
+      // Giả lập Prisma error P2002 - unique constraint
+      const prismaError = new Error('Unique constraint failed on the fields: (`doctor_id`,`date`,`shift`)')
+      prismaError.code = 'P2002'
+      prismaError.meta = {
+        target: ['unique_doctor_slot']
+      }
+
+      appointmentRepository.create.mockRejectedValueOnce(prismaError)
+
+      try {
+        await appointmentService.bookAppointment(data)
+        expect.fail('Should have thrown an error')
+      } catch (error) {
+        expect(error.statusCode).toBe(409)
+        expect(error.message).toContain('Ca khám này đã có bác sĩ đặt rồi')
+      }
+    })
+
+    it('should throw other errors that are not unique constraint violation', async () => {
+      const data = {
+        patientId: 'patient-1',
+        doctorId: 'doctor-1',
+        date: '2026-05-25',
+        shift: 3,
+        reason: 'Khám sức khỏe'
+      }
+
+      const otherError = new Error('Database connection failed')
+      otherError.code = 'P0000'
+
+      appointmentRepository.create.mockRejectedValueOnce(otherError)
+
+      await expect(appointmentService.bookAppointment(data)).rejects.toThrow('Database connection failed')
+    })
+  })
 })

@@ -275,9 +275,7 @@ export const appointmentService = {
             throw Object.assign(new Error("Không tìm thấy lịch nghỉ này!"), { statusCode: 404 });
         }
 
-        // if (leave.doctorId !== doctorId) {
-        //     throw Object.assign(new Error("Bạn không có quyền hủy lịch nghỉ của bác sĩ khác!"), { statusCode: 403 });
-        // }
+       
 
         const leaveDate = new Date(leave.date);
         const today = new Date();
@@ -306,17 +304,29 @@ export const appointmentService = {
             throw Object.assign(new Error("Ca khám không hợp lệ (chỉ từ 1 đến 12)!"), { statusCode: 400 })
         }
 
-        const newAppointment = await appointmentRepository.create({
-            patientId,
-            doctorId,
-            date, 
-            shift, 
-            reason
-        })
+        try {
+            const newAppointment = await appointmentRepository.create({
+                patientId,
+                doctorId,
+                date, 
+                shift, 
+                reason
+            })
 
-        return {
-            appointmentId: newAppointment.id,
-            status: newAppointment.status
+            return {
+                appointmentId: newAppointment.id,
+                status: newAppointment.status
+            }
+        } catch (error) {
+            // Bắt lỗi unique constraint (P2002 từ Prisma)
+            if (error.code === 'P2002' && error.meta?.target?.includes('unique_doctor_slot')) {
+                throw Object.assign(
+                    new Error("Ca khám này đã có bác sĩ đặt rồi. Vui lòng chọn ca khám khác!"), 
+                    { statusCode: 409 }
+                )
+            }
+            // Nếu không phải lỗi unique constraint, throw lại
+            throw error
         }
     },
 
