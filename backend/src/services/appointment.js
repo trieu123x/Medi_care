@@ -130,7 +130,6 @@ export const appointmentService = {
 
     getAvailableSlots: async (filters) => {
         const { date, doctorId, patientId } = filters
-        console.log("Patient ID nhận được:", patientId)
 
         if (!date) {
             throw Object.assign(new Error("Vui lòng cung cấp ngày cần xem lịch!"), { statusCode: 400 })
@@ -143,68 +142,33 @@ export const appointmentService = {
             return []
         }
 
-        
+        // Kiểm tra bệnh nhân đã có lịch hẹn trong ngày chưa
         if (patientId) {
-            const patientExistingAppointment = await appointmentRepository.findExistingPatientAppointment(patientId, date);
-
-            if (patientExistingAppointment) {
-                return []; 
+            const hasExistingAppointment = await appointmentRepository.findExistingPatientAppointment(patientId, date)
+            if (hasExistingAppointment) {
+                return []
             }
         }
 
-        let targetDoctors = []
-        if (doctorId) {
-            targetDoctors = [{ id: doctorId }]
-        } else {
-            targetDoctors = await appointmentRepository.findActiveDoctors()
+        // Kiểm tra bác sĩ ID bắt buộc
+        if (!doctorId) {
+            throw Object.assign(new Error("Vui lòng cung cấp ID bác sĩ!"), { statusCode: 400 })
         }
 
-        if (targetDoctors.length === 0) return []
+        // Lấy lịch bận của bác sĩ này
+        const { doctorLeaves, bookedShifts } = await appointmentRepository.getUnavailableSlots({ date, doctorId })
 
-        const unavailable = await appointmentRepository.getUnavailableSlots({ date, doctorId })
-
-        const doctorBusyMap = {}
-        targetDoctors.forEach(doc => {
-            doctorBusyMap[doc.id] = new Set()
-        })
-
-        unavailable.doctorLeaves.forEach(leave => {
-            if (doctorBusyMap[leave.doctorId]) {
-                if (leave.shift === null) {
-                    ALL_SHIFTS.forEach(shift => doctorBusyMap[leave.doctorId].add(shift))
-                } else {
-                    doctorBusyMap[leave.doctorId].add(leave.shift)
-                }
-            }
-        })
-
-        unavailable.bookedShifts.forEach(app => {
-            if (doctorBusyMap[app.doctorId]) {
-                doctorBusyMap[app.doctorId].add(app.shift)
-            }
-        })
-
-        const result = []
-
-        ALL_SHIFTS.forEach(shift => {
-            const availableDoctorsForShift = []
-            
-            targetDoctors.forEach(doc => {
-                if (!doctorBusyMap[doc.id].has(shift)) {
-                    availableDoctorsForShift.push({ doctorId: doc.id }) 
-                }
-            })
-
-            if (availableDoctorsForShift.length > 0) {
-                result.push({
-                    shift: shift,
-                    date: date,
-                    availableDoctors: availableDoctorsForShift
-                })
-            }
-        })
-
-        return result
+        // Trả về danh sách các ca trống
+        return ALL_SHIFTS
+            .filter(shift => 
+                !doctorLeaves.some(l => l.shift === null || l.shift === shift) &&
+                !bookedShifts.some(b => b.shift === shift)
+            )
+            .map(shift => ({
+                shift,
+                date,
+                doctorId
+            }))
     },
 
     registerDoctorLeave: async (data) => {

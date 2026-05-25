@@ -199,7 +199,7 @@ export default function Medicines() {
           onRowClick={(row) => router.push(`/admin/medicines/detail?id=${row.id}`)}
         />
         <div className="flex pt-4">
-          <span className="font-bold italic text-[#1100CD] text-[12px]">
+          <span className="font-bold italic text-[#1100CD] text-xl">
             Tổng số {totalCount}
           </span>
         </div>

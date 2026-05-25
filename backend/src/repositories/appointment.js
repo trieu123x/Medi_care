@@ -266,7 +266,7 @@ export const appointmentRepository = {
                 select: { shift: true, doctorId: true }
             })
         ])
-
+        console.log(leaves)
         return {
             bookedShifts: appointments,
             doctorLeaves: leaves
