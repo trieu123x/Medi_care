@@ -12,7 +12,6 @@ import { supabase } from "@/utils/supabase";
 export default function Detail() {
   const { user, isDoctor, isAdmin } = useAuthStore();
   const userId = user?.id;
-
   const [fullName, setFullName] = useState("");
   const [hometown, setHometown] = useState("");
   const [email, setEmail] = useState("");
@@ -31,37 +30,24 @@ export default function Detail() {
         return;
       }
 
-      try {
-        const res = await userApi.getUserById(userId);
-
-        if (res && res.success) {
-          const profile = res.data?.profile || res.data || {};
-
-          setFullName(profile.fullName || "");
-          setEmail(profile.email || "");
-          setPhone(profile.phone || "");
-          setHometown(profile.address || "");
-          let avatarToSet = profile.avatarUrl || "";
-          if (avatarToSet && !avatarToSet.startsWith("http")) {
-            avatarToSet = supabase.storage
-              .from("avatars")
-              .getPublicUrl(avatarToSet).data.publicUrl;
-          }
-          setCurrentAvatarUrl(avatarToSet);
-          
-          let cropToSet = profile.avatarCropData || null;
-          if (typeof cropToSet === 'string') {
-            try { cropToSet = JSON.parse(cropToSet); } catch (e) {}
-          }
-          setCurrentCropData(cropToSet);
-        } else {
-          console.error("Lỗi từ server:", res?.message);
-        }
-      } catch (error) {
-        console.error("Lỗi khi tải thông tin người dùng:", error);
-      } finally {
-        setLoading(false);
+      setFullName(user.fullName || "");
+      setEmail(user.email || "");
+      setPhone(user.phone || "");
+      setHometown(user.address || "");
+      let avatarToSet = user.avatarUrl || "";
+      if (avatarToSet && !avatarToSet.startsWith("http")) {
+        avatarToSet = supabase.storage.from("avatars").getPublicUrl(avatarToSet)
+          .data.publicUrl;
       }
+      setCurrentAvatarUrl(avatarToSet);
+
+      let cropToSet = user.avatarCropData || null;
+      if (typeof cropToSet === "string") {
+        try {
+          cropToSet = JSON.parse(cropToSet);
+        } catch (e) {}
+      }
+      setCurrentCropData(cropToSet);
     };
 
     fetchUserInfo();
@@ -152,14 +138,6 @@ export default function Detail() {
       setSaving(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="grow flex items-center justify-center bg-gray-50 min-h-[500px]">
-        <p className="text-gray-500 italic">Đang tải thông tin...</p>
-      </div>
-    );
-  }
 
   if (!userId) {
     return (

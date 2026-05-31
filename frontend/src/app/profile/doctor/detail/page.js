@@ -54,31 +54,25 @@ export default function Detail() {
         }
 
         // 2. Tải thông tin Profile (bắt buộc)
-        try {
-          const userRes = await userApi.getUserById(userId);
-          if (userRes && userRes.success) {
-            const profile = userRes.data?.profile || userRes.data || {};
-            setFullName(profile.fullName || "");
-            setEmail(profile.email || "");
-            setPhone(profile.phone || "");
-            setHometown(profile.address || "");
-            let avatarToSet = profile.avatarUrl || "";
-            if (avatarToSet && !avatarToSet.startsWith("http")) {
-              avatarToSet = supabase.storage
-                .from("avatars")
-                .getPublicUrl(avatarToSet).data.publicUrl;
-            }
-            setCurrentAvatarUrl(avatarToSet);
-            
-            let cropToSet = profile.avatarCropData || null;
-            if (typeof cropToSet === 'string') {
-              try { cropToSet = JSON.parse(cropToSet); } catch (e) {}
-            }
-            setCurrentCropData(cropToSet);
-          }
-        } catch (err) {
-          console.error("Lỗi tải Profile:", err);
+        setFullName(user.fullName || "");
+        setEmail(user.email || "");
+        setPhone(user.phone || "");
+        setHometown(user.address || "");
+        let avatarToSet = user.avatarUrl || "";
+        if (avatarToSet && !avatarToSet.startsWith("http")) {
+          avatarToSet = supabase.storage
+            .from("avatars")
+            .getPublicUrl(avatarToSet).data.publicUrl;
         }
+        setCurrentAvatarUrl(avatarToSet);
+
+        let cropToSet = user.avatarCropData || null;
+        if (typeof cropToSet === "string") {
+          try {
+            cropToSet = JSON.parse(cropToSet);
+          } catch (e) {}
+        }
+        setCurrentCropData(cropToSet);
 
         // 3. Tải thông tin Doctor (có thể 404 nếu là bác sĩ mới)
         try {
