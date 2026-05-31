@@ -30,10 +30,9 @@ export default function Login() {
       // Axios Instance đã trả về trực tiếp response.data, nên res lúc này là object { success, message, data, accessToken }
       const userData = res?.data;
       const accessToken = res?.accessToken;
-      const refreshToken = res?.refreshToken;
 
-      // Lưu token vào cả localStorage lẫn cookie
-      saveTokens(accessToken, refreshToken);
+      // Lưu token vào bộ nhớ RAM tạm thời
+      saveTokens(accessToken);
 
       console.log("Thông tin user sau khi đăng nhập:", userData);
 

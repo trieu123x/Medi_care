@@ -45,10 +45,10 @@ export const useAuthStore = create(
       },
 
       fetchUser: async () => {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+        const isLogin = get().isLogin;
         
-        if (!token) {
-          set({ isLoading: false, isLogin: false, user: null });
+        if (!isLogin) {
+          set({ isLoading: false, user: null });
           return;
         }
 

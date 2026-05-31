@@ -108,7 +108,7 @@ describe('authService', () => {
         phone: '123',
         role: 'PATIENT'
       })
-    }))
+    })
   })
 
   describe('login', () => {

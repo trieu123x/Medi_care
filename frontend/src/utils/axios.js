@@ -3,59 +3,26 @@ import axios from 'axios';
 // Định cấu hình URL gốc của API.
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL;
 
-// --- Cookie Helpers ---
-const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+// --- In-Memory Token Storage ---
+let inMemoryAccessToken = null;
 
 /**
- * Lưu một giá trị vào cookie phía client.
- * @param {string} name  - Tên cookie
- * @param {string} value - Giá trị
- * @param {number} days  - Số ngày hết hạn
+ * Lưu access_token vào bộ nhớ RAM tạm thời.
  */
-const setCookie = (name, value, days) => {
-  if (typeof document === 'undefined') return;
-  const expires = new Date(Date.now() + days * 864e5).toUTCString();
-  const sameSite = isHttps ? 'None' : 'Lax';
-  const secure = isHttps ? '; Secure' : '';
-  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=${sameSite}${secure}`;
-};
-
-/**
- * Xóa cookie phía client.
- * @param {string} name - Tên cookie cần xóa
- */
-const removeCookie = (name) => {
-  if (typeof document === 'undefined') return;
-  const sameSite = isHttps ? 'None' : 'Lax';
-  const secure = isHttps ? '; Secure' : '';
-  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=${sameSite}${secure}`;
-};
-
-/**
- * Lưu cả access_token và refresh_token vào localStorage + cookie.
- */
-const saveTokens = (accessToken, refreshToken) => {
+const saveTokens = (accessToken) => {
   if (!accessToken) return;
-  localStorage.setItem('access_token', accessToken);
-  setCookie('access_token', accessToken, 7);
-  if (refreshToken) {
-    localStorage.setItem('refresh_token', refreshToken);
-    setCookie('refresh_token', refreshToken, 30);
-  }
+  inMemoryAccessToken = accessToken;
 };
 
 /**
- * Xóa token khỏi localStorage + cookie.
+ * Xóa token khỏi bộ nhớ RAM.
  */
 const clearTokens = () => {
-  localStorage.removeItem('access_token');
-  localStorage.removeItem('refresh_token');
-  removeCookie('access_token');
-  removeCookie('refresh_token');
+  inMemoryAccessToken = null;
 };
 
 // Xuất helpers để dùng ở nơi khác (ví dụ: login page, auth store)
-export { saveTokens, clearTokens, setCookie, removeCookie };
+export { saveTokens, clearTokens };
 
 // ---------------------------------------------------------------------------
 
@@ -68,11 +35,8 @@ const axiosInstance = axios.create({
 // Interceptor cho Request: tự động gắn access_token vào header
 axiosInstance.interceptors.request.use(
   (config) => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('access_token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+    if (inMemoryAccessToken) {
+      config.headers.Authorization = `Bearer ${inMemoryAccessToken}`;
     }
     return config;
   },
@@ -107,15 +71,6 @@ axiosInstance.interceptors.response.use(
       typeof window !== 'undefined' &&
       !originalRequest?.url?.includes('/auth/login')
     ) {
-      const refreshTokenValue = localStorage.getItem('refresh_token');
-
-      // Nếu không có refresh token → xóa hết và về login
-      if (!refreshTokenValue) {
-        clearTokens();
-        window.location.href = '/login';
-        return Promise.reject(error);
-      }
-
       // Nếu đang refresh thì đưa request vào hàng đợi chờ
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
@@ -133,18 +88,20 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
 
       try {
+        // Gửi request làm mới token. 
+        // Trình duyệt sẽ tự động đính kèm cookie HttpOnly refresh_token nhờ withCredentials
         const res = await axios.post(
           `${API_URL}/auth/refresh-token`,
-          { refreshToken: refreshTokenValue },
+          {},
           { withCredentials: true }
         );
 
-        const { accessToken, refreshToken: newRefreshToken } = res.data;
+        const { accessToken } = res.data;
 
-        // Lưu token mới vào cả localStorage lẫn cookie
-        saveTokens(accessToken, newRefreshToken);
+        // Lưu token mới vào bộ nhớ RAM
+        saveTokens(accessToken);
 
-        // Cập nhật header mặc định
+        // Cập nhật header mặc định cho axiosInstance
         axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
 
         // Xử lý hàng đợi
@@ -154,7 +111,7 @@ axiosInstance.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return axiosInstance(originalRequest);
       } catch (refreshError) {
-        // Refresh token cũng hết hạn → bắt buộc đăng nhập lại
+        // Refresh token cũng hết hạn hoặc lỗi → bắt buộc đăng nhập lại
         processQueue(refreshError, null);
         clearTokens();
         window.location.href = '/login';

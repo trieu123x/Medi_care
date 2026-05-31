@@ -28,7 +28,6 @@ export const authService = {
       }
     }
 
-    let userId;
     // 2. Tạo user trên Supabase Auth với password mặc định
     const { supabaseAdmin } = await import("../configs/supabase-config.js");
     if (!supabaseAdmin) {
@@ -44,26 +43,10 @@ export const authService = {
     });
 
     if (authError) {
-      // Nếu đã tồn tại trên Supabase, lấy thông tin user thông qua supabaseAdmin
-      if (authError.message?.toLowerCase().includes("already registered") || authError.message?.toLowerCase().includes("already exists")) {
-        const { data: adminUserData, error: adminUserError } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
-        if (!adminUserError && adminUserData?.users) {
-          const matchedUser = adminUserData.users.find(u => u.email === email);
-          if (matchedUser) {
-            userId = matchedUser.id;
-          } else {
-            throw Object.assign(new Error("Email đã được đăng ký trên hệ thống xác thực"), { statusCode: 400 });
-          }
-        } else {
-          throw Object.assign(new Error("Email đã được đăng ký nhưng không thể đồng bộ hóa"), { statusCode: 400 });
-        }
-      } else {
-        throw Object.assign(new Error(authError.message), { statusCode: 400 });
-      }
-    } else {
-      userId = authData.user?.id;
+      throw Object.assign(new Error(authError.message), { statusCode: 400 });
     }
 
+    const userId = authData.user?.id;
     if (!userId) {
       throw Object.assign(new Error("Không thể tạo tài khoản"), { statusCode: 500 });
     }
@@ -161,46 +144,20 @@ export const authService = {
 
     const { password, fullName, phone } = record.data;
 
-    let userId;
-    let authUserEmail = email;
-
-    // Tạo user trên Supabase Auth bằng Admin API để tự động confirmed email
-    const { supabaseAdmin } = await import("../configs/supabase-config.js");
-    if (!supabaseAdmin) {
-      throw Object.assign(new Error("Cần cấu hình SUPABASE_SERVICE_ROLE_KEY"), { statusCode: 500 });
-    }
-
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    // Tạo user trên Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
-      user_metadata: { full_name: fullName, phone },
-      email_confirm: true,
-      phone_confirm: true,
+      options: {
+        data: { full_name: fullName, phone },
+      },
     });
 
     if (authError) {
-      if (authError.message?.toLowerCase().includes("already registered") || authError.message?.toLowerCase().includes("already exists")) {
-        // Nếu đã tồn tại trên Supabase, lấy thông tin user thông qua supabaseAdmin
-        const { data: adminUserData, error: adminUserError } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
-        if (!adminUserError && adminUserData?.users) {
-          const matchedUser = adminUserData.users.find(u => u.email === email);
-          if (matchedUser) {
-            userId = matchedUser.id;
-            authUserEmail = matchedUser.email;
-          } else {
-            throw Object.assign(new Error("Email đã được đăng ký trên hệ thống xác thực"), { statusCode: 400 });
-          }
-        } else {
-          throw Object.assign(new Error("Email đã được đăng ký nhưng không thể truy xuất thông tin"), { statusCode: 400 });
-        }
-      } else {
-        throw Object.assign(new Error(authError.message), { statusCode: 400 });
-      }
-    } else {
-      userId = authData.user?.id;
-      authUserEmail = authData.user?.email || email;
+      throw Object.assign(new Error(authError.message), { statusCode: 400 });
     }
 
+    const userId = authData.user?.id;
     if (!userId) {
       throw Object.assign(new Error("Không thể tạo tài khoản"), {
         statusCode: 500,
@@ -224,10 +181,15 @@ export const authService = {
       fullName: profile.fullName,
       phone: profile.phone,
       role: profile.role,
-      email: authUserEmail,
+      email: authData.user.email,
     };
   },
 
+  /**
+   * Đăng nhập
+   * - Xác thực qua Supabase Auth (email/password)
+   * - Trả về session token + thông tin profile
+   */
   login: async ({ email, password }) => {
     // 1. Xác thực với Supabase
     const { data: authData, error: authError } =
