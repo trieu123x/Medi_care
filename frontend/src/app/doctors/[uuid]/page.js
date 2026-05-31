@@ -97,7 +97,7 @@ export default function DoctorDetailPage() {
               </div>
             </div>
 
-            <Button onClick={handleBookingClick} className="absolute top-[180%] bg-[#0a008c] hover:bg-blue-900 text-white px-6 py-1.5">
+            <Button onClick={handleBookingClick} className=" mt-4 bg-[#0a008c] hover:bg-blue-900 text-white px-6 py-1.5">
               Đặt lịch khám ngay!
             </Button>
           </div>

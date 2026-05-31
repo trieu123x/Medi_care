@@ -236,7 +236,7 @@ export default function Detail() {
             {/* Chuyên khoa */}
             <div className="w-full flex justify-between gap-3">
               <div className="w-full">
-                <label className="block text-[14px] font-medium text-gray-700 mb-1">
+                <label className="block text-[24px] font-bold text-gray-700 mb-1">
                   Chuyên khoa
                 </label>
                 <select
@@ -293,7 +293,7 @@ export default function Detail() {
         <Button
           onClick={handleSave}
           disabled={saving}
-          className={`absolute bottom-5 right-10 
+          className={`absolute bottom-5 right-46 
           bg-[#070575] hover:bg-[#08069b] py-2 text-white transition-opacity
           ${saving ? "opacity-70 cursor-not-allowed" : ""}
         `}
