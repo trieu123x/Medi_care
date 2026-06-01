@@ -22,7 +22,8 @@ export const doctorController = {
     getDoctorById: async (req, res, next) => {
         try {
             const { id } = req.params
-            const doctor = await doctorService.getDoctorById(id)
+            const userId = req.user?.id || null  // Lấy userId từ token nếu có
+            const doctor = await doctorService.getDoctorById(id, userId)
             
             res.status(200).json({
                 success: true,

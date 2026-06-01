@@ -1,4 +1,5 @@
 import { medicineRepository } from "../repositories/medicine.js"
+import { eventService } from "./event.js"
 import axios from "axios"
 
 export const medicineService = {
@@ -24,11 +25,17 @@ export const medicineService = {
         }
     },
 
-    getMedicineById: async (id) => {
+    getMedicineById: async (id, userId = null) => {
         const medicine = await medicineRepository.findById(id)
         if (!medicine) {
             throw Object.assign(new Error("Không tìm thấy thuốc"), { statusCode: 404 })
         }
+        
+        // Track sự kiện xem chi tiết thuốc
+        if (userId) {
+            eventService.track(userId, 'VIEW_MEDICINE', id)
+        }
+        
         return medicine
     },
 

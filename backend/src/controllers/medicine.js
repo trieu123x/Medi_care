@@ -36,7 +36,8 @@ export const getAllMedicines = catchError(async (req, res) => {
 
 export const getMedicineById = catchError(async (req, res) => {
     const { id } = req.params
-    const data = await medicineService.getMedicineById(id)
+    const userId = req.user?.id || null  // Lấy userId từ token nếu có
+    const data = await medicineService.getMedicineById(id, userId)
     res.status(200).json({
         success: true,
         message: "Lấy thông tin thuốc thành công",

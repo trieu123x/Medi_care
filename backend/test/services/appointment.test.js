@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { appointmentService } from '@/services/appointment.js'
 import { appointmentRepository } from '@/repositories/appointment.js'
 import { prisma } from '@/configs/prisma-config.js'
+import { eventService } from '@/services/event.js'
 
 vi.mock('@/repositories/appointment.js', () => ({
   appointmentRepository: {
@@ -20,6 +21,12 @@ vi.mock('@/configs/prisma-config.js', () => ({
     profile: {
       findMany: vi.fn()
     }
+  }
+}))
+
+vi.mock('@/services/event.js', () => ({
+  eventService: {
+    track: vi.fn()
   }
 }))
 
@@ -199,6 +206,8 @@ describe('appointmentService', () => {
 
   describe('bookAppointment - Unique Constraint', () => {
     it('should throw error 409 when unique constraint is violated', async () => {
+      vi.setSystemTime(new Date('2026-05-24'))  // Hôm trước ngày đặt
+      
       const data = {
         patientId: 'patient-1',
         doctorId: 'doctor-1',
@@ -226,6 +235,8 @@ describe('appointmentService', () => {
     })
 
     it('should throw other errors that are not unique constraint violation', async () => {
+      vi.setSystemTime(new Date('2026-05-24'))  // Hôm trước ngày đặt
+      
       const data = {
         patientId: 'patient-1',
         doctorId: 'doctor-1',

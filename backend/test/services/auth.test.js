@@ -86,12 +86,12 @@ describe('authService', () => {
     })
 
     it('should throw error if supabase signup fails', async () => {
-      supabaseAdmin.auth.admin.createUser.mockRejectedValue(new Error('Signup failed'))
+      supabase.auth.signUp.mockResolvedValue({ data: null, error: new Error('Signup failed') })
       await expect(authService.verifyRegister({ email, otp })).rejects.toThrow('Signup failed')
     })
 
     it('should create user successfully', async () => {
-      supabaseAdmin.auth.admin.createUser.mockResolvedValue({ 
+      supabase.auth.signUp.mockResolvedValue({ 
         data: { user: { id: 'user-123', email: 'test@a.com' } }, 
         error: null 
       })

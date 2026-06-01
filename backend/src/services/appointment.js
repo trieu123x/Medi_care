@@ -1,4 +1,5 @@
 import { appointmentRepository } from "../repositories/appointment.js"
+import { eventService } from "./event.js"
 
 /**
  * Chuyển "YYYY-MM-DD" thành đối tượng Date ở đầu ngày theo giờ Việt Nam (UTC+7).
@@ -275,6 +276,13 @@ export const appointmentService = {
                 date, 
                 shift, 
                 reason
+            })
+
+            // Track sự kiện đặt lịch khám
+            eventService.track(patientId, 'BOOK_APPOINTMENT', newAppointment.id, {
+                doctorId,
+                date,
+                shift
             })
 
             return {

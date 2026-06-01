@@ -1,4 +1,5 @@
 import { doctorRepository } from "../repositories/doctor.js"
+import { eventService } from "./event.js"
 import axios from "axios"
 
 export const doctorService = {
@@ -28,11 +29,17 @@ export const doctorService = {
         }
     },
 
-    getDoctorById: async (id) => {
+    getDoctorById: async (id, userId = null) => {
         const doctor = await doctorRepository.findDoctorById(id)
         if (!doctor) {
             throw Object.assign(new Error("Không tìm thấy thông tin bác sĩ"), { statusCode: 404 })
         }
+        
+        // Track sự kiện xem chi tiết bác sĩ
+        if (userId) {
+            eventService.track(userId, 'VIEW_DOCTOR', id)
+        }
+        
         return doctor
     },
 
