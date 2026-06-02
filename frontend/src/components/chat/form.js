@@ -360,10 +360,89 @@ function MessageForm({ messageData, role = "AI", haveObject = false }) {
   );
 }
 
+function LogoMessage({ avatar = "/images/Avartar.jpg" }) {
+  return (
+    <div className="relative w-8 h-8 rounded-full overflow-hidden">
+      <Image fill src={avatar} alt="" />
+    </div>
+  );
+}
+
+// Parse [DOCTOR_CARD id="..." name="..." specialty="..." avatar="..."] tags
+function parseMessage(message) {
+  const DOCTOR_CARD_REGEX =
+    /\[DOCTOR_CARD\s+id="([^"]*?)"\s+name="([^"]*?)"\s+specialty="([^"]*?)"\s+avatar="([^"]*?)"\]/g;
+
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = DOCTOR_CARD_REGEX.exec(message)) !== null) {
+    // Text trước tag
+    if (match.index > lastIndex) {
+      parts.push({ type: "text", content: message.slice(lastIndex, match.index) });
+    }
+    // Doctor card
+    parts.push({
+      type: "doctor_card",
+      id: match[1],
+      name: match[2],
+      specialty: match[3],
+      avatar: match[4],
+    });
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Text còn lại sau tag cuối
+  if (lastIndex < message.length) {
+    parts.push({ type: "text", content: message.slice(lastIndex) });
+  }
+
+  return parts.length > 0 ? parts : [{ type: "text", content: message }];
+}
+
+function DoctorCard({ id, name, specialty, avatar }) {
+  const avatarSrc =
+    avatar && avatar !== "None" && avatar !== "null" ? avatar : "/images/Avartar.jpg";
+
+  return (
+    <Link href={`${ROUTES.DOCTORS || "/doctors"}/${id}`}>
+      <div className="flex items-center gap-3 bg-white/20 hover:bg-white/30 transition-all rounded-2xl px-3 py-2 cursor-pointer border border-white/30 mt-1">
+        <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+          <Image
+            fill
+            src={avatarSrc}
+            alt={name}
+            onError={(e) => { e.target.src = "/images/Avartar.jpg"; }}
+          />
+        </div>
+        <div className="flex flex-col min-w-0">
+          <span className="font-semibold text-white text-sm truncate">{name}</span>
+          <span className="text-white/80 text-xs truncate">{specialty}</span>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 function TextMessage({ message = "" }) {
+  const parts = parseMessage(message);
+
   return (
     <div className="max-w-75 bg-[#8380FF] rounded-2xl px-4 py-1 wrap-break-word">
-      <ReactMarkdown>{message}</ReactMarkdown>
+      {parts.map((part, idx) =>
+        part.type === "doctor_card" ? (
+          <DoctorCard
+            key={idx}
+            id={part.id}
+            name={part.name}
+            specialty={part.specialty}
+            avatar={part.avatar}
+          />
+        ) : (
+          <ReactMarkdown key={idx}>{part.content}</ReactMarkdown>
+        )
+      )}
     </div>
   );
 }
@@ -374,10 +453,3 @@ function ObjectMessage() {
   );
 }
 
-function LogoMessage({ avatar = "/images/Avartar.jpg" }) {
-  return (
-    <div className="relative w-8 h-8 rounded-full overflow-hidden">
-      <Image fill src={avatar} alt="" />
-    </div>
-  );
-}

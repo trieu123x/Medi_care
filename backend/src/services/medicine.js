@@ -31,10 +31,9 @@ export const medicineService = {
             throw Object.assign(new Error("Không tìm thấy thuốc"), { statusCode: 404 })
         }
         
-        // Track sự kiện xem chi tiết thuốc
-        if (userId) {
-            eventService.track(userId, 'VIEW_MEDICINE', id)
-        }
+        eventService.track(userId, 'VIEW_MEDICINE', id, {
+            medicineName: medicine.name,
+        })
         
         return medicine
     },
@@ -80,6 +79,6 @@ export const medicineService = {
     },
 
     deleteMedicine: async (id) => {
-        return await medicineRepository.delete(id)
+        await medicineRepository.delete(id)
     }
 }

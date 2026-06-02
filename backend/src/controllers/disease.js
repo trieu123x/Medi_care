@@ -59,8 +59,7 @@ export const getDiseasesForAdmin = catchError(async (req, res) => {
 
 export const getDiseaseById = catchError(async (req, res) => {
     const { diseaseId } = req.params
-
-    const data = await diseaseService.getDiseaseDetail(diseaseId)
+    const data = await diseaseService.getDiseaseDetail(diseaseId, req.user?.id)
     res.status(200).json({
         success: true,
         message: "Lấy chi tiết bệnh thành công",

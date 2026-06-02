@@ -97,7 +97,9 @@ export const diseaseService = {
             throw Object.assign(new Error("Không tìm thấy thông tin bệnh!"), { statusCode: 404 })
         }
 
-        eventService.track(userId, 'VIEW_DISEASE', id)
+        eventService.track(userId, 'VIEW_DISEASE', id, {
+            diseaseName: disease.name,
+        })
 
         return disease
     },

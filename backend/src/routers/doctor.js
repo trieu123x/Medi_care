@@ -1,6 +1,6 @@
 import express from "express"
 import { doctorController } from "../controllers/doctor.js"
-import { authenticate, authorizeRoles } from "../middlewares/authenticate.js"
+import { authenticate, authorizeRoles, optionalAuthenticate } from "../middlewares/authenticate.js"
 
 import { validate } from "../middlewares/validate-handler.js"
 import { doctorSchema } from "../validates/doctor.js"
@@ -11,7 +11,7 @@ const router = express.Router()
 router.get("/", validate(doctorSchema.getAll), doctorController.getAllDoctors)
 
 // GET /doctors/:id: Fetch specific doctor
-router.get("/:id", validate(doctorSchema.getById), doctorController.getDoctorById)
+router.get("/:id", optionalAuthenticate, validate(doctorSchema.getById), doctorController.getDoctorById)
 
 // PATCH /doctors/:id: Update specific doctor info (self-only)
 router.patch("/:id", authenticate, authorizeRoles('DOCTOR'), validate(doctorSchema.update), doctorController.updateDoctorInfo)

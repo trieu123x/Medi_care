@@ -35,10 +35,10 @@ export const doctorService = {
             throw Object.assign(new Error("Không tìm thấy thông tin bác sĩ"), { statusCode: 404 })
         }
         
-        // Track sự kiện xem chi tiết bác sĩ
-        if (userId) {
-            eventService.track(userId, 'VIEW_DOCTOR', id)
-        }
+        eventService.track(userId, 'VIEW_DOCTOR', id, {
+            doctorName: doctor.profile?.fullName,
+            specialty: doctor.specialty?.name,
+        })
         
         return doctor
     },

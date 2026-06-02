@@ -94,3 +94,30 @@ export const authorizeRoles = (...allowedRoles) => {
 export const authorizeAdmin = authorizeRoles("ADMIN");
 export const authorizeDoctor = authorizeRoles("DOCTOR");
 export const authorizePatient = authorizeRoles("PATIENT");
+
+/**
+ * Middleware xác thực tùy chọn — không bắt buộc đăng nhập
+ * Nếu có token hợp lệ thì gắn req.user, nếu không thì bỏ qua (không trả 401)
+ * Dùng cho các route public nhưng cần biết user nếu đang đăng nhập
+ */
+export const optionalAuthenticate = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token =
+      authHeader && authHeader.startsWith("Bearer ")
+        ? authHeader.split(" ")[1]
+        : req.cookies?.access_token;
+
+    if (!token || token === "undefined" || token === "null") {
+      return next(); // Không có token — tiếp tục mà không set req.user
+    }
+
+    const { data, error } = await supabase.auth.getUser(token);
+    if (!error && data?.user) {
+      req.user = data.user;
+    }
+    next();
+  } catch (err) {
+    next(); // Lỗi token — vẫn tiếp tục, không chặn request
+  }
+};

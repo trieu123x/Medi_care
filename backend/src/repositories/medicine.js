@@ -79,6 +79,9 @@ export const medicineRepository = {
     },
 
     delete: async (id) => {
+        await prisma.medicineChunk.deleteMany({
+            where: { medicineId: id }
+        })
         return await prisma.medicine.delete({
             where: { id }
         })
