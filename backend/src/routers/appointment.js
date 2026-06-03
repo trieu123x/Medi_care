@@ -11,7 +11,7 @@ const router = express.Router()
 // Lấy lịch khám trống
 router.get("/slots", validate(appointmentSchema.getSlots), getAvailableSlots)
 // Đặt lịch
-router.post("/book", authenticate, authorizeRoles('PATIENT', 'ADMIN'), validate(appointmentSchema.bookAppointment), bookAppointment)
+router.post("/book", authenticate, authorizeRoles('PATIENT', 'ADMIN','DOCTOR'), validate(appointmentSchema.bookAppointment), bookAppointment)
 // Lấy danh sách các lịch khám
 router.get("/all", authenticate, authorizeRoles('ADMIN', 'DOCTOR'), validate(appointmentSchema.getAll), getAllAppointments)
 // Xem lịch khám của bệnh nhân

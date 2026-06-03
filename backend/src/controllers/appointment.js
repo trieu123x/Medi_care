@@ -4,7 +4,15 @@ import { catchError } from "../helpers/catch-error.js"
 export const bookAppointment = catchError(async (req, res) => {
     const { doctorId, date, shift, reason } = req.body 
     const patientId = req.user.id
-
+    if (!patientId || patientId === 'undefined' || patientId === 'null') {
+        throw Object.assign(new Error("Không tìm thấy thông tin bệnh nhân!"), { statusCode: 403 })
+    }
+    if (!doctorId || doctorId === 'undefined' || doctorId === 'null') {
+        throw Object.assign(new Error("Không tìm thấy thông tin bác sĩ!"), { statusCode: 403 })
+    }
+    if (patientId === doctorId) {
+        throw Object.assign(new Error("Không thể đặt lịch khám cho chính mình!"), { statusCode: 403 })
+    }
     const data = await appointmentService.bookAppointment({ 
         patientId, 
         doctorId, 
