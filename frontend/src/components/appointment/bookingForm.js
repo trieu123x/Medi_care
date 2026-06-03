@@ -157,20 +157,15 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
       return;
     }
 
-    if (!patientId) {
-      alert("Không tìm thấy thông tin bệnh nhân (Thiếu ID trên URL)!");
-      return;
-    }
-
     setLoading(true);
     try {
       const payload = {
-        patientId: patientId,
         doctorId: formData.doctorId, 
         date: formData.date,
         shift: parseInt(formData.shift),
         reason: formData.reason
       };
+      console.log("payload", payload);
 
       const res = await appointmentApi.bookAppointment(payload);
       

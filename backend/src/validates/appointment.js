@@ -3,9 +3,6 @@ import { z } from "zod";
 export const appointmentSchema = {
   bookAppointment: {
     body: z.object({
-      patientId: z.string().uuid({
-        message: "ID bệnh nhân không hợp lệ (phải là UUID)",
-      }),
       doctorId: z.string().uuid({ message: "ID bác sĩ không hợp lệ (phải là UUID)" }),
       date: z
         .string()

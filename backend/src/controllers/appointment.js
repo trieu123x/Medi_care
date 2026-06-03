@@ -2,13 +2,8 @@ import { appointmentService } from "../services/appointment.js"
 import { catchError } from "../helpers/catch-error.js"
 
 export const bookAppointment = catchError(async (req, res) => {
-    const { patientId, doctorId, date, shift, reason } = req.body 
-    const requesterId = patientId
-    const requesterRole = 'patient'
-
-    if (requesterRole === 'PATIENT' && patientId !== requesterId) {
-        throw Object.assign(new Error("Bạn chỉ có thể đặt lịch cho chính mình."), { statusCode: 403 })
-    }
+    const { doctorId, date, shift, reason } = req.body 
+    const patientId = req.user.id
 
     const data = await appointmentService.bookAppointment({ 
         patientId, 

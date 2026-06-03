@@ -20,7 +20,7 @@ export const profileRepository = {
         })
     },
 
-    create: async ({ id, fullName, email, phone, role = "patient" }) => {
+    create: async ({ id, fullName, email, phone, role = "PATIENT" }) => {
         return await prisma.profile.create({
             data: { id, fullName, email, phone, role }
         })
