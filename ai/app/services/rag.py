@@ -129,18 +129,37 @@ class RAGService:
         """
 
         doctor_chunks_query = """
-            SELECT d.id as doctor_id, p.full_name as name, p.avatar_url, s.name as specialty, doc_c.content,
-                   (1 - (doc_c.embedding <=> $1::vector)) as score
+            SELECT DISTINCT ON (d.id)
+                   d.id as doctor_id, p.full_name as name, p.avatar_url, s.name as specialty, doc_c.content,
+                   GREATEST(
+                       (1 - (doc_c.embedding <=> $1::vector)),
+                       COALESCE((
+                           SELECT MAX(1 - (dc2.embedding <=> $1::vector))
+                           FROM disease_chunks dc2
+                           JOIN diseases dis ON dc2.disease_id = dis.id
+                           WHERE dis.specialty_id = d.specialty_id
+                           LIMIT 5
+                       ), 0)
+                   ) as score
             FROM doctor_chunks doc_c
             JOIN doctors d ON doc_c.doctor_id = d.id
             JOIN profiles p ON d.id = p.id
             LEFT JOIN specialties s ON d.specialty_id = s.id
-            WHERE (1 - (doc_c.embedding <=> $1::vector)) > 0.4
+            WHERE (1 - (doc_c.embedding <=> $1::vector)) > 0.3
                OR $2 ILIKE '%' || s.name || '%'
                OR $2 ILIKE '%' || p.full_name || '%'
-            ORDER BY 
-               (CASE WHEN $2 ILIKE '%' || s.name || '%' THEN 1 ELSE 0 END) DESC,
-               (CASE WHEN $2 ILIKE '%' || p.full_name || '%' THEN 1 ELSE 0 END) DESC,
+               OR EXISTS (
+                   SELECT 1 FROM diseases dis
+                   WHERE dis.specialty_id = d.specialty_id
+                     AND (
+                         $2 ILIKE '%' || dis.name || '%'
+                         OR $2 ILIKE '%' || SPLIT_PART(dis.symptoms, ',', 1) || '%'
+                     )
+               )
+            ORDER BY d.id,
+               (CASE WHEN $2 ILIKE '%' || s.name || '%' THEN 2
+                     WHEN EXISTS (SELECT 1 FROM diseases dis WHERE dis.specialty_id = d.specialty_id AND $2 ILIKE '%' || dis.name || '%') THEN 1
+                     ELSE 0 END) DESC,
                doc_c.embedding <=> $1::vector
             LIMIT 3
         """
@@ -168,7 +187,8 @@ class RAGService:
             if intent in [Intent.DOCTOR_SEARCH, Intent.APPOINTMENT_BOOKING, Intent.EMERGENCY,
                           Intent.SYMPTOM_INQUIRY, Intent.GENERAL_HEALTH]:
                 try:
-                    return await db.fetch(doctor_chunks_query, vector_str, user_input)
+                    # Dùng rewritten_query cho ILIKE để match tốt hơn từ khóa bệnh/triệu chứng
+                    return await db.fetch(doctor_chunks_query, vector_str, rewritten_query)
                 except Exception as e:
                     print(f"[RAG] Lỗi tra cứu doctor: {e}")
             return []

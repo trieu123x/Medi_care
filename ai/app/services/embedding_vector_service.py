@@ -93,9 +93,12 @@ class EmbeddingService:
         return results
 
     # Vector data bác sĩ (có áp dụng chunking)
-    async def embed_doctor_data(self, name: str, specialty: str, experience: str, education: str) -> list[dict]:
+    async def embed_doctor_data(self, name: str, specialty: str, experience: str, education: str, diseases: str = "") -> list[dict]:
         from app.services.chunking_service import chunking_service
+        # Làm giàu text bằng thông tin bệnh/triệu chứng chuyên khoa để matching tốt hơn
         full_text = f"Bác sĩ: {name}. Chuyên khoa: {specialty}. Kinh nghiệm: {experience}. Học vấn: {education}"
+        if diseases:
+            full_text += f". Các bệnh/triệu chứng chuyên khoa điều trị: {diseases}"
         chunks = chunking_service.split_text(full_text)
         
         results = []

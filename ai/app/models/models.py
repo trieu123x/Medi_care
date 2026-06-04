@@ -31,4 +31,5 @@ class DoctorRequest(BaseModel):
     specialty: str
     experience: str
     education: str
+    diseases: str = ""  # Danh sách bệnh/triệu chứng chuyên khoa (tùy chọn, giúp vector matching chính xác hơn)
 

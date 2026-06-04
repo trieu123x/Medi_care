@@ -28,6 +28,7 @@ async def medicine_to_vector(request: MedicineRequest) -> DiseaseResponse:
 async def doctor_to_vector(request: DoctorRequest) -> DiseaseResponse:
     from app.services.embedding_vector_service import embedding_service
     chunks = await embedding_service.embed_doctor_data(
-        request.name, request.specialty, request.experience, request.education
+        request.name, request.specialty, request.experience, request.education,
+        diseases=request.diseases
     )
     return DiseaseResponse(chunks=chunks)

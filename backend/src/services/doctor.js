@@ -2,6 +2,22 @@ import { doctorRepository } from "../repositories/doctor.js"
 import { eventService } from "./event.js"
 import axios from "axios"
 
+// Lấy tóm tắt bệnh + triệu chứng thuộc chuyên khoa (dùng để làm giàu embedding bác sĩ)
+async function _getDiseasesBySpecialty(specialtyId) {
+    if (!specialtyId) return ""
+    try {
+        const { prisma } = await import("../configs/prisma-config.js")
+        const diseases = await prisma.disease.findMany({
+            where: { specialtyId },
+            select: { name: true, symptoms: true },
+            take: 6
+        })
+        return diseases.map(d => `${d.name}: ${d.symptoms || ''}`).join('. ')
+    } catch (e) {
+        return ""
+    }
+}
+
 export const doctorService = {
     getAllDoctors: async (page = 1, limit = 10, { name, specialtyId } = {}) => {
         const skip = (page - 1) * limit
@@ -56,11 +72,13 @@ export const doctorService = {
 
         try {
             const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'
+            const diseases = await _getDiseasesBySpecialty(updatedDoctor.specialtyId)
             const res = await axios.post(`${AI_SERVICE_URL}/ai/disease/doctor`, {
                 name: updatedDoctor.profile.fullName,
                 specialty: updatedDoctor.specialty?.name || "",
                 experience: updatedDoctor.experience || "",
-                education: updatedDoctor.education || ""
+                education: updatedDoctor.education || "",
+                diseases
             })
             const chunks = res.data?.chunks
             if (chunks && Array.isArray(chunks) && chunks.length > 0) {
@@ -131,11 +149,13 @@ export const doctorService = {
 
         try {
             const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'
+            const diseases = await _getDiseasesBySpecialty(newDoctor.specialtyId)
             const res = await axios.post(`${AI_SERVICE_URL}/ai/disease/doctor`, {
                 name: newDoctor.profile.fullName,
                 specialty: newDoctor.specialty?.name || "",
                 experience: newDoctor.experience || "",
-                education: newDoctor.education || ""
+                education: newDoctor.education || "",
+                diseases
             })
             const chunks = res.data?.chunks
             if (chunks && Array.isArray(chunks) && chunks.length > 0) {
@@ -157,11 +177,13 @@ export const doctorService = {
 
         try {
             const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'
+            const diseases = await _getDiseasesBySpecialty(updatedDoctor.specialtyId)
             const res = await axios.post(`${AI_SERVICE_URL}/ai/disease/doctor`, {
                 name: updatedDoctor.profile.fullName,
                 specialty: updatedDoctor.specialty?.name || "",
                 experience: updatedDoctor.experience || "",
-                education: updatedDoctor.education || ""
+                education: updatedDoctor.education || "",
+                diseases
             })
             const chunks = res.data?.chunks
             if (chunks && Array.isArray(chunks) && chunks.length > 0) {
