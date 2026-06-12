@@ -6,20 +6,22 @@ const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'
 
 export const chatService = {
     createSession: async (userId, content) => {
-        let title = 'New Chat'
-        try {
-            const aiResponse = await axios.post(`${AI_SERVICE_URL}/ai/predict/title`, {
-                first_message: content
-            })
-            if (aiResponse.data && aiResponse.data.title) {
-                title = aiResponse.data.title
-            }
-        } catch (error) {
-            console.error("Lỗi khi gọi AI lấy title:", error.message)
-        }
-
-        const session = await chatRepository.createSession(userId, title)
+        // Create session with an initial title from the content to avoid blocking
+        const initialTitle = content.trim().slice(0, 30) + (content.length > 30 ? '...' : '')
+        const session = await chatRepository.createSession(userId, initialTitle)
         const message = await chatRepository.createMessage(session.id, 'USER', content)
+
+        // Predict and update title in the background
+        axios.post(`${AI_SERVICE_URL}/ai/predict/title`, {
+            first_message: content
+        }).then(async (aiResponse) => {
+            if (aiResponse.data && aiResponse.data.title) {
+                await chatRepository.updateSessionTitle(session.id, aiResponse.data.title)
+            }
+        }).catch((error) => {
+            console.error("Lỗi khi gọi AI lấy title:", error.message)
+        })
+
         return { session, message }
     },
 

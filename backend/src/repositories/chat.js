@@ -37,6 +37,13 @@ export const chatRepository = {
         })
     },
 
+    updateSessionTitle: async (id, title) => {
+        return await prisma.chatSession.update({
+            where: { id },
+            data: { title }
+        })
+    },
+
     createMessage: async (sessionId, role, content, metadata = null) => {
         return await prisma.chatMessage.create({
             data: {

@@ -127,6 +127,13 @@ export function ChatForm() {
     setIsTyping(true);
     setIsThinking(true);
 
+    // Scroll to bottom immediately
+    setTimeout(() => {
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTop = 0;
+      }
+    }, 50);
+
     let currentSessionId = session;
 
     try {
@@ -149,9 +156,11 @@ export function ChatForm() {
           },
         ]);
       } else {
-        await saveChatMessage(currentSessionId, {
+        saveChatMessage(currentSessionId, {
           role: "USER",
           content: questionToAsk,
+        }).catch((err) => {
+          console.error("Lỗi khi lưu tin nhắn USER:", err);
         });
       }
 

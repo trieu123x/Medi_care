@@ -29,7 +29,7 @@ export const aiChatApi = async (
   onError = (err) => { }
 ) => {
   try {
-    const API_BASE_URL = process.env.NEXT_PUBLIC_AI_API_URL || 'https://tro-li-ai-production.up.railway.app'
+    const API_BASE_URL = process.env.NEXT_PUBLIC_AI_API_URL
     console.log("SESSION ID: ", sessionId)
     const response = await fetch(`${API_BASE_URL}/ai/chat`, {
       method: 'POST',
