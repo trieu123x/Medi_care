@@ -75,22 +75,29 @@ export const appointmentRepository = {
                 throw Object.assign(new Error("Khung giờ này vừa có người đặt, vui lòng chọn ca khác!"), { statusCode: 409 })
             }
 
-            return await tx.appointment.create({
-                data: {
-                    patientId,
-                    doctorId,
-                    date: appointmentDate,
-                    shift,
-                    reason,
-                    status: "PENDING"
-                },
-                select: { 
-                    id: true, 
-                    status: true,
-                    date: true,
-                    shift: true
+            try {
+                return await tx.appointment.create({
+                    data: {
+                        patientId,
+                        doctorId,
+                        date: appointmentDate,
+                        shift,
+                        reason,
+                        status: "PENDING"
+                    },
+                    select: { 
+                        id: true, 
+                        status: true,
+                        date: true,
+                        shift: true
+                    }
+                })
+            } catch (error) {
+                if (error.code === 'P2002') {
+                    throw Object.assign(new Error("Không thể đặt trùng lịch."), { statusCode: 409 })
                 }
-            })
+                throw error;
+            }
         })
     },
 

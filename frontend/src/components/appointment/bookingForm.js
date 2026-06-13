@@ -177,7 +177,8 @@ export function BookingForm({ patientId, onConfirm, onChangeData }) {
         alert(res.message || "Đặt lịch thất bại, vui lòng thử lại.");
       }
     } catch (error) {
-      alert("Đã có lỗi xảy ra từ máy chủ.");
+      const msg = error?.response?.data?.message || error?.message || "Đã có lỗi xảy ra từ máy chủ.";
+      alert(msg);
     } finally {
       setLoading(false);
     }

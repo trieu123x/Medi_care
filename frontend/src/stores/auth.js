@@ -44,6 +44,14 @@ export const useAuthStore = create(
         })
       },
 
+      updateUser: (partialUser) => {
+        const currentUser = get().user;
+        if (!currentUser) return;
+        set({
+          user: { ...currentUser, ...partialUser }
+        });
+      },
+
       fetchUser: async () => {
         const isLogin = get().isLogin;
         

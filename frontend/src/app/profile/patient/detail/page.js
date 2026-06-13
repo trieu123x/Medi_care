@@ -10,7 +10,7 @@ import { useAuthStore } from "@/stores/auth";
 import { supabase } from "@/utils/supabase";
 
 export default function Detail() {
-  const { user, isDoctor, isAdmin } = useAuthStore();
+  const { user, isDoctor, isAdmin, updateUser } = useAuthStore();
   const userId = user?.id;
   const [fullName, setFullName] = useState("");
   const [hometown, setHometown] = useState("");
@@ -106,6 +106,8 @@ export default function Detail() {
       }
 
       setCurrentAvatarUrl(publicUrl);
+      // Cập nhật store → Navbar tự re-render ngay lập tức
+      updateUser({ avatarUrl: publicUrl });
       alert("Đã cập nhật ảnh đại diện mới thành công!");
     } catch (error) {
       console.error(error);

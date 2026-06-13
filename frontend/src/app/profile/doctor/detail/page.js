@@ -12,7 +12,7 @@ import { useAuthStore } from "@/stores/auth";
 import { supabase } from "@/utils/supabase";
 
 export default function Detail() {
-  const { user, isDoctor } = useAuthStore();
+  const { user, isDoctor, updateUser } = useAuthStore();
   const userId = user?.id;
 
   // Thông tin cá nhân
@@ -152,6 +152,8 @@ export default function Detail() {
       const res = await userApi.updateUser(userId, payload);
       if (res?.success) {
         setCurrentAvatarUrl(uploadData.secure_url);
+        // Cập nhật store → Navbar tự re-render ngay lập tức
+        updateUser({ avatarUrl: uploadData.secure_url });
         alert("Đã cập nhật ảnh đại diện thành công!");
       }
     } catch (error) {
