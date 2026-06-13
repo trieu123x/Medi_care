@@ -4,9 +4,10 @@ import { LinkButton } from "@/components/ui/LinkButton"
 import { SearchInput } from "@/components/ui/SearchInput"
 import { SelectBox } from "@/components/ui/SelectBox"
 import { Table } from "@/components/ui/Table"
+import { Pagination } from "@/components/ui/Pagination"
 import { Filter } from "lucide-react"
-import { useState, useEffect, useRef, useCallback } from "react"
-import { getDiseasesForAdmin, deleteDisease, getTotalDiseases } from "@/routers/disease-api"
+import { useState, useEffect, useCallback } from "react"
+import { getDiseasesForAdmin, deleteDisease } from "@/routers/disease-api"
 import { getSpecialties } from "@/routers/specialty-api"
 import { useRouter } from "next/navigation"
 import { cleanSearchTerm } from "@/helper/string-format"
@@ -31,17 +32,17 @@ export default function Diseases() {
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
+
   // Data State
   const [specialties, setSpecialties] = useState([])
   const [diseases, setDiseases] = useState([])
-  const [totalCount, setTotalCount] = useState(0)
-  const [hasMore, setHasMore] = useState(true)
   const [loading, setLoading] = useState(true)
 
-  // Refs
-  const tableRef = useRef(null)
-  const isFetching = useRef(false)
-
+  // Load specialties once
   useEffect(() => {
     const fetchSpecialties = async () => {
       try {
@@ -56,100 +57,51 @@ export default function Diseases() {
     fetchSpecialties()
   }, [])
 
+  // Debounce search
   useEffect(() => {
-    const fetchCount = async () => {
-      try {
-        const res = await getTotalDiseases()
-        if (res.data) setTotalCount(res.data.total)
-      } catch (error) {
-        console.error("Lỗi lấy tổng số bệnh:", error)
-      }
-    }
-    fetchCount()
-  }, [])
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 300)
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search)
+      setCurrentPage(1) // Reset về trang 1 khi search thay đổi
+    }, 300)
     return () => clearTimeout(timer)
   }, [search])
 
-  // Hàm tạo Params chung
-  const buildParams = useCallback((lastId = undefined) => {
-    const selectedSpecialty = specialties.find(s => s.name === option)
+  // Reset trang 1 khi thay đổi filter
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [option])
 
+  const buildParams = useCallback(() => {
+    const selectedSpecialty = specialties.find(s => s.name === option)
     return {
       limit: PAGE_SIZE,
+      page: currentPage,
       specialtyId: selectedSpecialty?.id || undefined,
       name: cleanSearchTerm(debouncedSearch) || undefined,
-      lastId: lastId
     }
-  }, [option, debouncedSearch, specialties])
+  }, [option, debouncedSearch, specialties, currentPage])
 
-  // Fetch dữ liệu LẦN ĐẦU hoặc KHI FILTER THAY ĐỔI
+  // Fetch data khi params thay đổi
   useEffect(() => {
-    const fetchInitialData = async () => {
+    const fetchData = async () => {
       setLoading(true)
-      isFetching.current = true
-
       try {
         const params = buildParams()
         const res = await getDiseasesForAdmin(params)
         if (res.data) {
-          setDiseases(res.data)
-          setHasMore(res.data.length >= PAGE_SIZE)
+          setDiseases(res.data.items || [])
+          setTotalCount(res.data.total || 0)
+          setTotalPages(res.data.totalPages || 1)
         }
       } catch (error) {
         console.error("Lỗi tải danh sách bệnh:", error)
       } finally {
         setLoading(false)
-        isFetching.current = false
       }
     }
 
-    fetchInitialData()
+    fetchData()
   }, [buildParams])
-
-  const loadMore = useCallback(async () => {
-    if (isFetching.current || !hasMore || diseases.length === 0) return
-
-    const lastId = diseases[diseases.length - 1].id
-
-    isFetching.current = true
-    setLoading(true)
-
-    try {
-      const params = buildParams(lastId)
-      const res = await getDiseasesForAdmin(params)
-
-      if (res.data) {
-        setDiseases(prev => {
-          const combined = [...prev, ...res.data]
-          return Array.from(new Map(combined.map(item => [item.id, item])).values())
-        })
-        setHasMore(res.data.length >= PAGE_SIZE)
-      }
-    } catch (error) {
-      console.error("Lỗi tải thêm bệnh:", error)
-    } finally {
-      setLoading(false)
-      isFetching.current = false
-    }
-  }, [hasMore, diseases, buildParams])
-
-  useEffect(() => {
-    const tableEl = tableRef.current
-    if (!tableEl) return
-
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = tableEl
-      if (scrollTop + clientHeight >= scrollHeight - 50 && hasMore && !isFetching.current) {
-        loadMore()
-      }
-    }
-
-    tableEl.addEventListener("scroll", handleScroll)
-    return () => tableEl.removeEventListener("scroll", handleScroll)
-  }, [loadMore, hasMore])
 
   const handleDelete = async (row) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa bệnh này không?")) return
@@ -195,21 +147,27 @@ export default function Diseases() {
         </div>
       </div>
 
-      <div className="px-10 pt-3 pb-4 flex-1 overflow-hidden">
+      <div className="px-10 pt-3 pb-4 flex-1 overflow-hidden flex flex-col">
         <Table
-          ref={tableRef}
           isLoading={loading}
           columns={TABLE_COLUMNS}
           data={diseases}
-          className="max-h-[calc(100vh-250px)]"
+          className="max-h-[calc(100vh-300px)]"
           rowClassName="even:bg-white odd:bg-[#F1F4FF]"
           onDelete={handleDelete}
           onRowClick={(row) => router.push(`/admin/diseases/detail?id=${row.id}`)}
         />
-        <div className="flex pt-4">
+
+        {/* Footer: tổng số + phân trang */}
+        <div className="flex items-center justify-between pt-4">
           <span className="font-bold italic text-[#1100CD] text-[12px]">
-            Tổng số {totalCount}
+            Tổng số {totalCount} bệnh
           </span>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         </div>
       </div>
     </div>

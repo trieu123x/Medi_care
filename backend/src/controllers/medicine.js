@@ -10,11 +10,11 @@ export const getTotalMedicines = catchError(async (req, res) => {
 })
 
 export const getMedicinesForAdmin = catchError(async (req, res) => {
-    const { name, typeId, lastId, limit } = req.query
+    const { name, typeId, page, limit } = req.query
     const data = await medicineService.getMedicinesForAdmin({
         name,
         typeId,
-        lastId,
+        page: page ? parseInt(page) : 1,
         limit: limit ? parseInt(limit) : 30
     })
     res.status(200).json({

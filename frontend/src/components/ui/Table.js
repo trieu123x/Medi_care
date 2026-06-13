@@ -6,6 +6,7 @@ import { twMerge } from "tailwind-merge";
 export function Table({
   columns = [{ key: "Bắt buộc", label: "Bắt buộc", mode: "tick/del/bỏ qua", width: "tùy chọn" }],
   data = [],
+  isLoading = false,
   className = "",
   headerClassName = "",
   rowClassName = "",
@@ -38,7 +39,17 @@ export function Table({
         </thead>
 
         <tbody>
-          {data.length === 0 ? (
+          {isLoading ? (
+            Array.from({ length: 8 }).map((_, i) => (
+              <tr key={`skel-${i}`} className={i % 2 === 0 ? "bg-white" : "bg-[#F1F4FF]"}>
+                {columns.map((col) => (
+                  <td key={col.key} className="px-4 py-3">
+                    <div className="h-4 bg-gray-200 rounded animate-pulse" style={{ width: col.width ? "60%" : "80%" }} />
+                  </td>
+                ))}
+              </tr>
+            ))
+          ) : data.length === 0 ? (
             <tr>
               <td
                 colSpan={columns.length}

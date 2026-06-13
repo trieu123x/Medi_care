@@ -8,7 +8,16 @@ export const medicineService = {
     },
 
     getMedicinesForAdmin: async (filters) => {
-        return await medicineRepository.findAllForAdmin(filters)
+        const { items, total } = await medicineRepository.findAllForAdmin(filters)
+        const limit = filters.limit || 30
+        const page = filters.page || 1
+        return {
+            items,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
+        }
     },
 
     getAllMedicines: async (filters = {}, page = 1, limit = 10) => {

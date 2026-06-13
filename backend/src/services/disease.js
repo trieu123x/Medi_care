@@ -86,9 +86,16 @@ export const diseaseService = {
     },
 
     getDiseasesForAdmin: async (filters) => {
-        const diseases = await diseaseRepository.findAllForAdmin(filters)
-
-        return diseases
+        const { items, total } = await diseaseRepository.findAllForAdmin(filters)
+        const limit = filters.limit || 30
+        const page = filters.page || 1
+        return {
+            items,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
+        }
     },
 
     getDiseaseDetail: async (id, userId = null) => {

@@ -15,8 +15,8 @@ import {
   saveChatMessage,
 } from "@/routers/chat-api";
 import { ChatHistory } from "./history";
+import { getCroppedAvatarUrl } from "@/utils/image";
 import ReactMarkdown from "react-markdown";
-
 export function ChatForm() {
   const {
     isOpen,
@@ -360,7 +360,7 @@ function MessageForm({ messageData, role = "AI", haveObject = false }) {
     <div
       className={`w-full flex ${role === "USER" && "flex-row-reverse"} gap-2 px-4`}
     >
-      <LogoMessage />
+      <LogoMessage role={role} />
       <div className="flex flex-col gap-2">
         <TextMessage message={messageData} />
         {haveObject && <ObjectMessage />}
@@ -369,10 +369,20 @@ function MessageForm({ messageData, role = "AI", haveObject = false }) {
   );
 }
 
-function LogoMessage({ avatar = "/images/Avartar.jpg" }) {
+function LogoMessage({ role = "AI" }) {
+  const user = useAuthStore((state) => state.user);
+  
+  let avatar = "/images/Bot.svg";
+  
+  if (role === "USER") {
+    const rawAvatarUrl = user?.profile?.avatarUrl || user?.avatarUrl || "/images/Avartar.jpg";
+    const cropData = user?.profile?.avatarCropData || user?.avatarCropData;
+    avatar = getCroppedAvatarUrl(rawAvatarUrl, cropData);
+  }
+
   return (
-    <div className="relative w-8 h-8 rounded-full overflow-hidden">
-      <Image fill src={avatar} alt="" />
+    <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[#303EFF]">
+      <Image fill src={avatar} alt="" className="object-cover" />
     </div>
   );
 }

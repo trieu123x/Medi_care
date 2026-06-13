@@ -5,21 +5,25 @@ export const medicineRepository = {
         return await prisma.medicine.count()
     },
 
-    findAllForAdmin: async ({ name, typeId, lastId, limit = 30 }) => {
+    findAllForAdmin: async ({ name, typeId, page = 1, limit = 30 }) => {
         const where = {}
         if (name) where.name = { contains: name, mode: 'insensitive' }
         if (typeId) where.typeId = typeId
 
-        if (lastId) {
-            where.id = { gt: lastId }
-        }
+        const skip = (page - 1) * limit
 
-        return await prisma.medicine.findMany({
-            where,
-            take: limit,
-            orderBy: { id: 'asc' },
-            include: { medicineType: true }
-        })
+        const [medicines, total] = await Promise.all([
+            prisma.medicine.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { id: 'asc' },
+                include: { medicineType: true }
+            }),
+            prisma.medicine.count({ where })
+        ])
+
+        return { items: medicines, total }
     },
 
     findAll: async (filters = {}, skip = 0, limit = 10) => {

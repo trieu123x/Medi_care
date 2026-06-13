@@ -40,13 +40,13 @@ export const getDiseases = catchError(async (req, res) => {
 })
 
 export const getDiseasesForAdmin = catchError(async (req, res) => { 
-    const { categoryId, specialtyId, name, lastId, limit } = req.query
+    const { categoryId, specialtyId, name, page, limit } = req.query
     
     const data = await diseaseService.getDiseasesForAdmin({ 
         categoryId, 
         specialtyId, 
         name, 
-        lastId,
+        page: page ? parseInt(page) : 1,
         limit: limit ? parseInt(limit) : 30 
     })
 
