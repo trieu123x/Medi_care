@@ -88,7 +88,7 @@ export default function Appointments() {
       await appointmentApi.updateAppointmentStatus(rowData.id, { status: "CONFIRMED" });
       // Xóa khỏi danh sách PENDING ngay lập tức → chuyển sang "Yêu cầu chưa hoàn tất"
       setRecords(prev => prev.filter(r => r.appointmentId !== rowData.id));
-      alert(`✅ Đã xác nhận lịch khám cho ${rowData.name}! Lịch sẽ xuất hiện trong "Yêu cầu chưa hoàn tất".`);
+      alert(`Đã xác nhận lịch khám cho ${rowData.name}! Lịch sẽ xuất hiện trong "Yêu cầu chưa hoàn tất".`);
     } catch (error) {
       console.error("Lỗi khi xác nhận lịch:", error);
       const errorMessage = error.response?.data?.message || "Có lỗi xảy ra khi xác nhận lịch khám.";
