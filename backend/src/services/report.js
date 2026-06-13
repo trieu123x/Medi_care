@@ -15,5 +15,12 @@ export const reportService = {
         }
 
         return report;
+    },
+
+    getLiveStats: async ({ startDate, endDate }) => {
+        if (!startDate || !endDate) {
+            throw Object.assign(new Error("Cần cung cấp startDate và endDate"), { statusCode: 400 });
+        }
+        return await reportRepository.getLiveStats({ startDate, endDate });
     }
-}
+}

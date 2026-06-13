@@ -22,3 +22,13 @@ export const getReportById = catchError(async (req, res) => {
         data: report
     });
 });
+
+export const getLiveStats = catchError(async (req, res) => {
+    const { startDate, endDate } = req.query;
+    const data = await reportService.getLiveStats({ startDate, endDate });
+    res.status(200).json({
+        success: true,
+        message: "Lấy thống kê thời gian thực thành công",
+        data
+    });
+});

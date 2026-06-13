@@ -159,15 +159,15 @@ export default function Diseases() {
         />
 
         {/* Footer: tổng số + phân trang */}
-        <div className="flex items-center justify-between pt-4">
-          <span className="font-bold italic text-[#1100CD] text-[12px]">
-            Tổng số {totalCount} bệnh
-          </span>
+        <div className="flex flex-col items-center pt-4 gap-2">
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={setCurrentPage}
           />
+          <span className="font-bold italic text-[#1100CD] text-[12px]">
+            Tổng số {totalCount} bệnh
+          </span>
         </div>
       </div>
     </div>

@@ -32,9 +32,7 @@ function DetailContent() {
   // State hỗ trợ logic nghiệp vụ
   const [initialData, setInitialData] = useState(null)
   const [imageFile, setImageFile] = useState(null)
-  const [cropData, setCropData] = useState(null)
   const [previewImage, setPreviewImage] = useState(null)
-  const [previewCropData, setPreviewCropData] = useState(null)
   const [loading, setLoading] = useState(isEditMode)
   const [degreeOptions, setDegreeOptions] = useState([])
   const [specialtyOptions, setSpecialtyOptions] = useState([])
@@ -76,12 +74,6 @@ function DetailContent() {
             setAchievements(dataToUse.doctor?.achievements || "")
 
             setPreviewImage(dataToUse.avatarUrl || null)
-            
-            let cropToSet = dataToUse.avatarCropData || null;
-            if (typeof cropToSet === 'string') {
-              try { cropToSet = JSON.parse(cropToSet); } catch (e) {}
-            }
-            setPreviewCropData(cropToSet)
             setUserRole(dataToUse.role || null)
 
             setInitialData({
@@ -123,10 +115,8 @@ function DetailContent() {
     initData()
   }, [id, isEditMode])
 
-  const handleAvatarChange = (file, cropPayload) => {
-    console.log("Tệp ảnh đã chọn:", file, "Crop:", cropPayload)
+  const handleAvatarChange = (file) => {
     setImageFile(file)
-    setCropData(cropPayload)
   }
 
   // Hàm gom dữ liệu hiện tại để so sánh
@@ -137,7 +127,7 @@ function DetailContent() {
   // Logic kiểm tra có thay đổi hay không
   const hasChanges = () => {
     if (!initialData) return false
-    if (imageFile !== null || cropData !== null) return true // Có thay avatar hoặc crop
+    if (imageFile !== null) return true
     return JSON.stringify(getCurrentData()) !== JSON.stringify(initialData)
   }
 
@@ -158,10 +148,6 @@ function DetailContent() {
           payload.append("avatar", imageFile)
         }
       }
-      if (cropData) {
-        payload.append("avatarCropData", JSON.stringify(cropData))
-      }
-
       if (isEditMode) {
         payload.append("address", hometown)
         const selectedDegree = degreeOptions.find(d => d.name === degree)
@@ -185,7 +171,6 @@ function DetailContent() {
         alert("Cập nhật thành công!")
         setInitialData(getCurrentData())
         setImageFile(null)
-        setCropData(null)
       } else {
         await createDoctorAccount(payload)
         alert("Tạo tài khoản bác sĩ thành công!")
@@ -236,8 +221,6 @@ function DetailContent() {
           label="Ảnh đại diện"
           onChange={handleAvatarChange}
           defaultImage={previewImage}
-          defaultCropData={previewCropData}
-          cropMode={true}
         />
       </div>
 

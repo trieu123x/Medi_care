@@ -15,7 +15,6 @@ import {
   saveChatMessage,
 } from "@/routers/chat-api";
 import { ChatHistory } from "./history";
-import { getCroppedAvatarUrl } from "@/utils/image";
 import ReactMarkdown from "react-markdown";
 export function ChatForm() {
   const {
@@ -375,9 +374,7 @@ function LogoMessage({ role = "AI" }) {
   let avatar = "/images/Bot.svg";
   
   if (role === "USER") {
-    const rawAvatarUrl = user?.profile?.avatarUrl || user?.avatarUrl || "/images/Avartar.jpg";
-    const cropData = user?.profile?.avatarCropData || user?.avatarCropData;
-    avatar = getCroppedAvatarUrl(rawAvatarUrl, cropData);
+    avatar = user?.profile?.avatarUrl || user?.avatarUrl || "/images/Avartar.jpg";
   }
 
   return (

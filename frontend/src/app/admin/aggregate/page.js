@@ -8,8 +8,7 @@ import { CalendarSelectBox } from "@/components/ui/CalendarSelectBox"
 import { Table } from "@/components/ui/Table"
 import { Filter } from "lucide-react"
 import { useEffect, useState } from "react"
-import { getReportsByTimeRange } from "@/routers/report-api"
-import { aggregateAndSortTopList } from "@/helper/aggregate-format"
+import { getLiveStats } from "@/routers/report-api"
 
 const DOCTOR_COLUMNS = [
   { key: "doctor_name", label: "Tên Bác sĩ", width: "30%" },
@@ -47,19 +46,9 @@ export default function Aggregate() {
     setEndDate(endOfDay(today))
   }
 
-  const extractRows = (apiRes) => {
-    const records = apiRes?.data || []
-    let rows = []
-    records.forEach(record => {
-      const rep = record.reports
-      if (Array.isArray(rep)) rows = [...rows, ...rep]
-      else if (rep?.previewData) rows = [...rows, ...rep.previewData]
-      else if (rep?.data?.previewData) rows = [...rows, ...rep.data.previewData]
-    })
-    return rows
-  }
 
   useEffect(() => {
+
     const handleFetchReport = async () => {
       if (!startDate || !endDate) return
 
@@ -67,85 +56,26 @@ export default function Aggregate() {
         const formattedStartDate = format(startDate, 'yyyy-MM-dd')
         const formattedEndDate = format(endDate, 'yyyy-MM-dd')
 
-        // Dùng allSettled — 1 report không có data không làm sập các report khác
-        const results = await Promise.allSettled([
-          getReportsByTimeRange("daily_summary", formattedStartDate, formattedEndDate),
-          getReportsByTimeRange("chat_topics", formattedStartDate, formattedEndDate),
-          getReportsByTimeRange("top_doctors", formattedStartDate, formattedEndDate),
-          getReportsByTimeRange("top_diseases", formattedStartDate, formattedEndDate),
-          getReportsByTimeRange("peak_shifts", formattedStartDate, formattedEndDate)
-        ])
+        const res = await getLiveStats(formattedStartDate, formattedEndDate)
 
-        // Lấy giá trị thành công hoặc null nếu thất bại
-        const [summerRes, chatRes, doctorRes, diseaseRes, peakShiftRes] = results.map(
-          (r, i) => {
-            if (r.status === 'fulfilled') return r.value
-            console.warn(`[Report] API thất bại tại index ${i}:`, r.reason)
-            return null
-          }
-        )
-
-        const dailyRows = extractRows(summerRes)
-        const chatRows = extractRows(chatRes)
-
-        const totalEvents = dailyRows.reduce((sum, r) => sum + Number(r.total_count || 0), 0)
-        const totalVisits = dailyRows
-          .filter(r => ['VIEW_DOCTOR', 'VIEW_DISEASE'].includes(r.event_type))
-          .reduce((sum, r) => sum + Number(r.total_count || 0), 0)
-        const totalChats = chatRows.reduce((sum, r) => sum + Number(r.total_sessions || r.mention_count || 0), 0)
-
-        setKpis({ events: totalEvents, visits: totalVisits, chats: totalChats })
-
-        const peakRows = extractRows(peakShiftRes)
-
-        const aggregatedPeakMap = peakRows.reduce((acc, row) => {
-          const shift = row.shift_number
-          if (!acc[shift]) {
-            acc[shift] = 0
-          }
-          acc[shift] += Number(row.total_events || 0)
-          return acc
-        }, {})
-
-        const formattedPeak = Object.keys(aggregatedPeakMap).map(shift => ({
-          label: `${shift}`,
-          value: aggregatedPeakMap[shift]
-        })).sort((a, b) => parseInt(a.label.split(' ')[1]) - parseInt(b.label.split(' ')[1]))
-
-        setPeakShifts(formattedPeak)
-
-        const aggregatedChatMap = chatRows.reduce((acc, row) => {
-          const topic = row.topic || "Khác"
-          if (!acc[topic]) acc[topic] = 0
-          acc[topic] += Number(row.total_sessions || row.mention_count || 0)
-          return acc
-        }, {})
-
-        const formattedChats = Object.keys(aggregatedChatMap).map(topic => ({
-          label: topic,
-          value: aggregatedChatMap[topic]
-        }))
-          .sort((a, b) => b.value - a.value)
-          .slice(0, 10)
-
-        setChatTopics(formattedChats)
-
-        const doctorRows = extractRows(doctorRes)
-        const diseaseRows = extractRows(diseaseRes)
-
-        setTopDoctors(aggregateAndSortTopList(doctorRows, "doctor"))
-        setTopDiseases(aggregateAndSortTopList(diseaseRows, "disease"))
-
+        if (res?.data) {
+          const { kpis, topDoctors, topDiseases, peakShifts, chatTopics } = res.data
+          setKpis(kpis || { events: 0, visits: 0, chats: 0 })
+          setTopDoctors(topDoctors || [])
+          setTopDiseases(topDiseases || [])
+          setPeakShifts(peakShifts || [])
+          setChatTopics(chatTopics || [])
+        }
       } catch (error) {
         console.error("Lỗi lấy báo cáo:", error)
       } finally {
-        // Đảm bảo luôn tắt loading dù thành công hay thất bại
         setLoading(false)
       }
     }
 
     handleFetchReport()
   }, [startDate, endDate])
+
 
   if (isLoading) return <div className="p-10 italic text-gray-500">Đang tải dữ liệu...</div>
 

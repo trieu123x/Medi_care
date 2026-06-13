@@ -21,7 +21,6 @@ export default function Detail() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [currentAvatarUrl, setCurrentAvatarUrl] = useState("");
-  const [currentCropData, setCurrentCropData] = useState(null);
 
   // Thông tin chuyên môn (chỉ cho bác sĩ)
   const [specialtyId, setSpecialtyId] = useState("");
@@ -65,14 +64,6 @@ export default function Detail() {
             .getPublicUrl(avatarToSet).data.publicUrl;
         }
         setCurrentAvatarUrl(avatarToSet);
-
-        let cropToSet = user.avatarCropData || null;
-        if (typeof cropToSet === "string") {
-          try {
-            cropToSet = JSON.parse(cropToSet);
-          } catch (e) {}
-        }
-        setCurrentCropData(cropToSet);
 
         // 3. Tải thông tin Doctor (có thể 404 nếu là bác sĩ mới)
         try {
@@ -139,7 +130,7 @@ export default function Detail() {
     }
   };
 
-  const handleAvatarChange = async (file, backendCropData) => {
+  const handleAvatarChange = async (file) => {
     if (!file) return;
     try {
       setSaving(true);
@@ -157,14 +148,10 @@ export default function Detail() {
 
       const payload = new FormData();
       payload.append("avatarUrl", uploadData.secure_url);
-      if (backendCropData) {
-        payload.append("avatarCropData", JSON.stringify(backendCropData));
-      }
 
       const res = await userApi.updateUser(userId, payload);
       if (res?.success) {
         setCurrentAvatarUrl(uploadData.secure_url);
-        setCurrentCropData(backendCropData);
         alert("Đã cập nhật ảnh đại diện thành công!");
       }
     } catch (error) {
@@ -285,8 +272,6 @@ export default function Detail() {
             label="Ảnh đại diện"
             onChange={handleAvatarChange}
             defaultImage={currentAvatarUrl}
-            defaultCropData={currentCropData}
-            cropMode={true}
           />
         </div>
 

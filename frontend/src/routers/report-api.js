@@ -14,3 +14,9 @@ export const getReportsByTimeRange = async (reportName, startDate, endDate, mode
 export const getReportById = async (id) => {
   return await axiosInstance.get(`/report/${id}`)
 }
+
+export const getLiveStats = async (startDate, endDate) => {
+  return await axiosInstance.get('/report/live', {
+    params: { startDate, endDate }
+  })
+}

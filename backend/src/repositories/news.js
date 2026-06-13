@@ -5,16 +5,24 @@ export const newsRespository = {
         return await prisma.news.count()
     },
 
-    findAllForAdmin: async ({ title, date, lastId, limit = 30 }) => {
+    findAllForAdmin: async ({ title, date, page = 1, limit = 30 }) => {
         const searchFilter = title ? `%${title.toLowerCase()}%` : null
-
-        const cursorCondition = lastId 
-            ? Prisma.sql`AND id > ${lastId}::uuid` 
-            : Prisma.empty
+        const offset = (page - 1) * limit
 
         const dateCondition = date
             ? Prisma.sql`AND created_at >= ${date}::date AND created_at < (${date}::date + interval '1 day')`
             : Prisma.empty
+
+        const filterConditions = Prisma.sql`
+            1=1
+            ${title ? Prisma.sql`AND LOWER(title) LIKE ${searchFilter}` : Prisma.empty}
+            ${dateCondition}
+        `
+
+        const totalResult = await prisma.$queryRaw`
+            SELECT COUNT(*)::int AS count FROM news WHERE ${filterConditions}
+        `
+        const total = totalResult[0]?.count || 0
 
         const newsList = await prisma.$queryRaw`
             SELECT 
@@ -24,21 +32,22 @@ export const newsRespository = {
                 new_url AS "newUrl", 
                 created_at AS "createdAt"
             FROM news
-            WHERE 1=1
-                ${title ? Prisma.sql`AND LOWER(title) LIKE ${searchFilter}` : Prisma.empty}
-                ${dateCondition}
-                ${cursorCondition}
-            ORDER BY id ASC
+            WHERE ${filterConditions}
+            ORDER BY created_at DESC
             LIMIT ${limit}
+            OFFSET ${offset}
         `
 
-        return newsList.map(news => ({
-            id: news.id,
-            title: news.title,
-            content: news.content,
-            newUrl: news.newUrl,
-            createdAt: news.createdAt
-        }))
+        return {
+            items: newsList.map(news => ({
+                id: news.id,
+                title: news.title,
+                content: news.content,
+                newUrl: news.newUrl,
+                createdAt: news.createdAt
+            })),
+            total
+        }
     },
 
     create: async (data) => {
@@ -83,16 +92,24 @@ export const newsRespository = {
         })
     },
 
-    findWithFilter: async ({ title, date, lastId, limit = 30 }) => {
+    findWithFilter: async ({ title, date, page = 1, limit = 10 }) => {
         const searchFilter = title ? `%${title.toLowerCase()}%` : null
-
-        const cursorCondition = lastId 
-            ? Prisma.sql`AND id > ${lastId}::uuid` 
-            : Prisma.empty
+        const offset = (page - 1) * limit
 
         const dateCondition = date
             ? Prisma.sql`AND created_at >= ${date}::date AND created_at < (${date}::date + interval '1 day')`
             : Prisma.empty
+
+        const filterConditions = Prisma.sql`
+            1=1
+            ${title ? Prisma.sql`AND LOWER(title) LIKE ${searchFilter}` : Prisma.empty}
+            ${dateCondition}
+        `
+
+        const totalResult = await prisma.$queryRaw`
+            SELECT COUNT(*)::int AS count FROM news WHERE ${filterConditions}
+        `
+        const total = totalResult[0]?.count || 0
 
         const newsList = await prisma.$queryRaw`
             SELECT 
@@ -101,21 +118,21 @@ export const newsRespository = {
                 new_url AS "newUrl", 
                 created_at AS "createdAt"
             FROM news
-            WHERE 1=1
-                ${title ? Prisma.sql`AND LOWER(title) LIKE ${searchFilter}` : Prisma.empty}
-                ${dateCondition}
-                ${cursorCondition}
-            ORDER BY id ASC
+            WHERE ${filterConditions}
+            ORDER BY created_at DESC
             LIMIT ${limit}
+            OFFSET ${offset}
         `
 
-        return newsList.map(news => ({
-            id: news.id,
-            title: news.title,
-            content: news.content,
-            newUrl: news.newUrl,
-            createdAt: news.createdAt
-        }))
+        return {
+            items: newsList.map(news => ({
+                id: news.id,
+                title: news.title,
+                newUrl: news.newUrl,
+                createdAt: news.createdAt
+            })),
+            total
+        }
     }
 
 }

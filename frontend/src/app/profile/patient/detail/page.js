@@ -17,9 +17,7 @@ export default function Detail() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
 
-  const [avatarFile, setAvatarFile] = useState(null);
   const [currentAvatarUrl, setCurrentAvatarUrl] = useState("");
-  const [currentCropData, setCurrentCropData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -40,14 +38,6 @@ export default function Detail() {
           .data.publicUrl;
       }
       setCurrentAvatarUrl(avatarToSet);
-
-      let cropToSet = user.avatarCropData || null;
-      if (typeof cropToSet === "string") {
-        try {
-          cropToSet = JSON.parse(cropToSet);
-        } catch (e) {}
-      }
-      setCurrentCropData(cropToSet);
     };
 
     fetchUserInfo();
@@ -84,7 +74,7 @@ export default function Detail() {
     }
   };
 
-  const handleAvatarChange = async (file, backendCropData) => {
+  const handleAvatarChange = async (file) => {
     if (!file) return;
 
     try {
@@ -96,40 +86,26 @@ export default function Detail() {
       formData.append("upload_preset", "medicare_avatar");
       const cloudName = "dfnlbrk4w";
 
-      console.log("Đang upload lên Cloudinary...");
       const uploadRes = await fetch(
         `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-        {
-          method: "POST",
-          body: formData,
-        },
+        { method: "POST", body: formData },
       );
 
       const uploadData = await uploadRes.json();
-
-      if (uploadData.error) {
-        throw new Error(uploadData.error.message);
-      }
+      if (uploadData.error) throw new Error(uploadData.error.message);
 
       const publicUrl = uploadData.secure_url;
-      console.log("Cloudinary URL:", publicUrl);
 
+      // 2. Lưu URL vào backend
       const payload = new FormData();
       payload.append("avatarUrl", publicUrl);
-      if (backendCropData) {
-        payload.append("avatarCropData", JSON.stringify(backendCropData));
-      }
-
-      // 2. Gửi URL này lên Backend của bạn để lưu thông qua API
       const res = await userApi.updateUser(userId, payload);
 
       if (!res || !res.success) {
         throw new Error(res?.message || "Lỗi khi lưu ảnh vào database");
       }
 
-      // 3. Hiển thị lại ảnh
       setCurrentAvatarUrl(publicUrl);
-      setCurrentCropData(backendCropData);
       alert("Đã cập nhật ảnh đại diện mới thành công!");
     } catch (error) {
       console.error(error);
@@ -195,11 +171,9 @@ export default function Detail() {
 
         <div className="w-full">
           <AvatarPicker
-            label="Họ và tên"
+            label="Ảnh đại diện"
             onChange={handleAvatarChange}
             defaultImage={currentAvatarUrl}
-            defaultCropData={currentCropData}
-            cropMode={true}
           />
         </div>
 
